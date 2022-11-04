@@ -2,7 +2,7 @@
 
 ## Description
 
-Create a single EC2 Instance abided by the [Common context](../../../README.MD#Common%20context).
+Create a single EC2 Instance abided by the [Common context](../../../README.MD#common-context).
 The solution must be generic enough to be reused by whatever department.
 
 **Input:**
