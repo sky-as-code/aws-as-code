@@ -1,0 +1,67 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Metadata:
+  License: MIT
+Description: 'Sky-As-Code organisation, AWS-As-Code repository.
+  Create a single EC2 Instance abided by the Common context.
+  **WARNING** You will be billed for the AWS resources used if you create a stack from this template.'
+Parameters:
+  # For Organisation compliance
+  Application:
+    Description: Name of the application using this AWS resource
+    Type: String
+  CostCenter:
+    Description: The department code
+    Type: String
+  Environment:
+    Description: The deployment environment
+    Type: String
+
+  # For this stack
+  AvailabilityZone:
+    Description: The Availability Zone of the instance.
+      If not specified, an Availability Zone will be automatically chosen for you based on the load balancing criteria for the Region.
+    Type: String # Use type String to prevent Cloudformation from validating and failing before we have chance to reach below !If condition.
+    Default: ''
+  InstanceType:
+    Description: EC2 instance type
+    Type: String
+    AllowedValues: [t2.micro, t3.micro]
+    ConstraintDescription: must be a free-tier eligible EC2 instance type.
+  AmiId:
+    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+    Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2' #Ref: https://docs.aws.amazon.com/systems-manager/latest/userguide/parameter-store-public-parameters-ami.html
+Conditions:
+  HasAZ: !Not
+    - !Equals
+      - !Ref AvailabilityZone
+      - ''
+Resources:
+  EC2Instance: # See: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-instance.html
+    Type: AWS::EC2::Instance
+    Properties:
+      AvailabilityZone: !If
+        - HasAZ
+        - !Ref AvailabilityZone
+        - !Ref 'AWS::NoValue'
+      ImageId: !Ref AmiId
+      InstanceType: !Ref InstanceType
+      Tags:
+        - Key: Application
+          Value: !Ref Application
+        - Key: CostCenter
+          Value: !Ref CostCenter
+        - Key: Environment
+          Value: !Ref Environment
+Outputs:
+  InstanceId:
+    Description: InstanceId of the newly created EC2 instance
+    Value: !Ref EC2Instance
+  AZ:
+    Description: Availability Zone of the newly created EC2 instance
+    Value: !GetAtt [EC2Instance, AvailabilityZone]
+  PublicDNS:
+    Description: Public DNSName of the newly created EC2 instance
+    Value: !GetAtt [EC2Instance, PublicDnsName]
+  PublicIP:
+    Description: Public IP address of the newly created EC2 instance
+    Value: !GetAtt [EC2Instance, PublicIp]
