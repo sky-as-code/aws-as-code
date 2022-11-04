@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 
 STACK_NAME='ec2-instance'
+INSTANCE_NAME='webserver'
 INSTANCE_TYPE='t3.micro'
 
 APPLICATION='compute-challenge'
-COST_CENTER='fin' # or 'sales', 'sec'
+COST_CENTER='sales' # or 'fin', 'sec'
 ENV='dev' # or 'prod'
 
 FILE_PATH=$(pwd)/cloudformation/main.yaml
@@ -35,52 +36,56 @@ stackExists() {
 }
 
 createStack() {
-	echo -e "Creating stack ..."
+	echo "Creating stack ..."
+
 	aws cloudformation create-stack \
 		--stack-name $STACK_NAME \
 		--template-body file:///$FILE_PATH \
 		--parameters ParameterKey=InstanceType,ParameterValue=$INSTANCE_TYPE \
+					ParameterKey=InstanceName,ParameterValue=$INSTANCE_NAME \
 					ParameterKey=Application,ParameterValue=$APPLICATION \
 					ParameterKey=CostCenter,ParameterValue=$COST_CENTER \
-					ParameterKey=Environment,ParameterValue=$ENV \
-	&& \
-	echo "Waiting for stack to be created ..." && \
+					ParameterKey=Environment,ParameterValue=$ENV
+					# ParameterKey=AmiId,ParameterValue='/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-ebs'
+					# ParameterKey=AvailabilityZone,ParameterValue='ap-southeast-1c'
+
+	echo "Waiting for stack to be created ..."
 	aws cloudformation wait stack-create-complete \
 		--stack-name $STACK_NAME
 }
 
 updateStack() {
-	echo -e "Updating stack ..."
+	echo "Updating stack ..."
 	aws cloudformation update-stack \
 		--stack-name $STACK_NAME \
 		--template-body file:///$FILE_PATH \
 		--parameters ParameterKey=InstanceType,ParameterValue=$INSTANCE_TYPE \
+					ParameterKey=InstanceName,ParameterValue=$INSTANCE_NAME \
 					ParameterKey=Application,ParameterValue=$APPLICATION \
 					ParameterKey=CostCenter,ParameterValue=$COST_CENTER \
-					ParameterKey=Environment,ParameterValue=$ENV \
-	&& \
-	echo "Waiting for stack update to complete ..." && \
+					ParameterKey=Environment,ParameterValue=$ENV
+
+	echo "Waiting for stack update to complete ..."
 	aws cloudformation wait stack-update-complete \
 		--stack-name $STACK_NAME
 }
 
 describeStack() {
-	echo -e "Describing stack ..."
 	echo $(aws cloudformation describe-stacks \
 			--stack-name $STACK_NAME 2>&1)
 }
 
 deleteStack() {
-	echo -e "Deleting stack ..."
+	echo "Deleting stack ..."
 	aws cloudformation delete-stack \
-		--stack-name $STACK_NAME \
-	&& \
-	echo "Waiting for stack to be deleted ..." && \
+		--stack-name $STACK_NAME
+
+	echo "Waiting for stack to be deleted ..."
 	aws cloudformation wait stack-delete-complete \
 		--stack-name $STACK_NAME
 }
 
-
+set -e # End script when an error occurs
 case $1 in
    create)
       createStack
@@ -101,3 +106,4 @@ case $1 in
      usage
      ;;
 esac
+set +e # Back to default

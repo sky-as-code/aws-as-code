@@ -7,13 +7,13 @@ Description: 'Sky-As-Code organisation, AWS-As-Code repository.
 Parameters:
   # For Organisation compliance
   Application:
-    Description: Name of the application using this AWS resource
+    Description: Name of the application using this AWS resource.
     Type: String
   CostCenter:
-    Description: The department code
+    Description: The department code.
     Type: String
   Environment:
-    Description: The deployment environment
+    Description: The deployment environment.
     Type: String
 
   # For this stack
@@ -22,14 +22,17 @@ Parameters:
       If not specified, an Availability Zone will be automatically chosen for you based on the load balancing criteria for the Region.
     Type: String # Use type String to prevent Cloudformation from validating and failing before we have chance to reach below !If condition.
     Default: ''
+  InstanceName:
+    Description: Last part of EC2 instance name, it will be prepended with a prefix.
+    Type: String
   InstanceType:
-    Description: EC2 instance type
+    Description: EC2 instance type.
     Type: String
     AllowedValues: [t2.micro, t3.micro]
     ConstraintDescription: must be a free-tier eligible EC2 instance type.
   AmiId:
     Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
-    Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2' #Ref: https://docs.aws.amazon.com/systems-manager/latest/userguide/parameter-store-public-parameters-ami.html
+    Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2' # See: https://docs.aws.amazon.com/systems-manager/latest/userguide/parameter-store-public-parameters-ami.html
 Conditions:
   HasAZ: !Not
     - !Equals
@@ -46,6 +49,13 @@ Resources:
       ImageId: !Ref AmiId
       InstanceType: !Ref InstanceType
       Tags:
+        - Key: Name
+          Value: !Join
+            - '-'
+            - - !Ref CostCenter
+              - !Ref Application
+              - !Ref Environment
+              - !Ref InstanceName
         - Key: Application
           Value: !Ref Application
         - Key: CostCenter

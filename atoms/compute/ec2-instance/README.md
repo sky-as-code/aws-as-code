@@ -2,7 +2,7 @@
 
 ## Description
 
-Create a single EC2 Instance abided by the [Common context](../../../README.MD#common-context).
+Create a single EC2 Instance abided by the [Common context](../../../README.md#common-context).
 The solution must be generic enough to be reused by whatever department.
 
 **Input:**
@@ -21,6 +21,14 @@ The solution must be generic enough to be reused by whatever department.
     the load balancing criteria for the Region.
 
     *Required*: No
+
+    *Type*: String
+
+  * `InstanceName`<br>
+    Last part of EC2 instance name. The full instance name must be built with this format
+    <costCenter>-<application>-<environment>-<InstanceName>. For example: sales-ecommerce-dev-webserver, fin-trend-analytics-prod-reportingserver...
+
+    *Required*: Yes
 
     *Type*: String
 
