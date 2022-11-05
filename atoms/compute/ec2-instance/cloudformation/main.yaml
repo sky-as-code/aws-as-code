@@ -2,7 +2,7 @@ AWSTemplateFormatVersion: '2010-09-09'
 Metadata:
   License: MIT
 Description: 'Sky-As-Code organisation, AWS-As-Code repository.
-  Create a single EC2 Instance abided by the Common context.
+  Create a single EC2 Instance abided by following Common context: Resource tagging compliance.
   **WARNING** You will be billed for the AWS resources used if you create a stack from this template.'
 Parameters:
   # For Organisation compliance
@@ -33,11 +33,13 @@ Parameters:
   AmiId:
     Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
     Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2' # See: https://docs.aws.amazon.com/systems-manager/latest/userguide/parameter-store-public-parameters-ami.html
+
 Conditions:
   HasAZ: !Not
     - !Equals
       - !Ref AvailabilityZone
       - ''
+
 Resources:
   EC2Instance: # See: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-instance.html
     Type: AWS::EC2::Instance

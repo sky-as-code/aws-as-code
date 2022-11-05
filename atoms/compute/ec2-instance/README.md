@@ -2,7 +2,9 @@
 
 ## Description
 
-Create a single EC2 Instance abided by the [Common context](../../../README.md#common-context).
+Create a single EC2 Instance abided by following [Common context](../../../README.md#common-context):
+  * Resource tagging compliance.
+
 The solution must be generic enough to be reused by whatever department.
 
 **Input:**
@@ -26,7 +28,7 @@ The solution must be generic enough to be reused by whatever department.
 
   * `InstanceName`<br>
     Last part of EC2 instance name. The full instance name must be built with this format
-    <costCenter>-<application>-<environment>-<InstanceName>. For example: sales-ecommerce-dev-webserver, fin-trend-analytics-prod-reportingserver...
+    `{costCenter}-{application}-{environment}-{InstanceName}`. For example: sales-ecommerce-dev-webserver, fin-trend-analytics-prod-reportingserver...
 
     *Required*: Yes
 
@@ -40,14 +42,14 @@ The solution must be generic enough to be reused by whatever department.
     *Type*: String
 
   * `Application`<br>
-    Name of the application using this AWS resource. For tag value.
+    Name of the application using this AWS resource.
 
     *Required*: Yes
 
     *Type*: String
 
   * `CostCenter`<br>
-    The department code. For tag value.
+    The department code.
 
     *Required*: Yes
 
@@ -90,3 +92,9 @@ You can start with this template and modify it to satisfy this challenge: https:
 To run this solution:
   - `cd` to this directory
   - `./run-cfm.sh create` or `./run-cfm.sh` for help menu
+
+## What we learnt
+
+If a VPC isn't specified, and if your account is created before 2013-12-04, you have an option to launch EC2-Classic Instance outside VPC. If your account is after 2013-12-04, your new EC2 Instance will automatically be put in default VPC of the Region.
+
+If Availability Zone isn't specified, an Availability Zone will be automatically chosen for your new EC2 Instance based on the balance criteria of the Region.

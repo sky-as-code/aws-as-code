@@ -1,0 +1,86 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Metadata:
+  License: MIT
+Description: "Sky-As-Code organisation, AWS-As-Code repository.
+  Create a VPC abided by following Common context: Resource tagging compliance, AWS Region compliance.
+  **NOTICE** You won't be billed for the AWS resources used if you create a stack from this template."
+Parameters:
+  # For Organisation compliance
+  CostCenter:
+    Description: The department code.
+    Type: String
+  EnvironmentType:
+    Description: The deployment environment type.
+    Type: String
+
+  # For this stack
+  VPCName:
+    Description: Last part of VPC instance, it will be prepended with a prefix.
+    Type: String
+  NetworkAddressIpV4:
+    Description: 'The IP address part of the CIDR, before slash (/). E.g: 10.0.0.0'
+    Type: String
+  SubnetBitsIpV4:
+    Description: 'The bits part of the CIDR, after slash (/). E.g: 8, 16, 24'
+    Type: Number
+    MinValue: 8
+    MaxValue: 30
+
+Mappings:
+  # This mapping accounts for the scenario when certain AZs
+  # are not available to use (this differs on a per account
+  # per customer basis). E.g., if the 'c' AZ is not available
+  # in a specific region in one's account then updating the
+  # list contained in the mapping below here will allow a
+  # different AZ to be chosen.
+  AzRegions:
+      ap-southeast-1:
+        AZs: [b, c]
+      eu-central-1:
+        AZs: [a, b]
+      us-east-1:
+        AZs: [d, e]
+
+Conditions:
+  ShouldCreateVpc: !Not
+    - !Equals
+      - !FindInMap [AzRegions, !Ref "AWS::Region", AZs]
+      - ''
+
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Condition: ShouldCreateVpc
+    Properties:
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      CidrBlock: !Sub "${NetworkAddressIpV4}/${SubnetBitsIpV4}" # E.g: 10.0.0.0/16
+      Tags:
+        -
+          Key: Name # E.g: fin-nonprod-services-v1, sec-prod-tooling-v123
+          Value: !Join
+            - '-'
+            - - !Ref CostCenter
+              - !Ref EnvironmentType
+              - !Ref VPCName
+        - Key: EnvironmentType
+          Value: !Ref EnvironmentType
+
+Outputs:
+  VPCId:
+    Description: VPCId of VPC
+    Value: !Ref VPC
+    Export:
+      Name: !Sub "vpc-${CostCenter}-${EnvironmentType}" # E.g: vpc-fin-nonprod, vpc-sec-prod
+
+  NetworkAddressIpV4:
+    Description: 'The IP address part of the CIDR, before slash (/). E.g: 10.0.0.0'
+    Value: !Ref NetworkAddressIpV4
+    Export:
+      Name: !Sub "vpc-${CostCenter}-${EnvironmentType}-networkAddress" # E.g: vpc-fin-nonprod-networkAddress, vpc-sec-prod-networkAddress
+
+  SubnetBitsIpV4:
+    Description: 'The bits part of the CIDR, after slash (/). E.g: 8, 16, 24'
+    Value: !Ref SubnetBitsIpV4
+    Export:
+      Name: !Sub "vpc-${CostCenter}-${EnvironmentType}-subnetBits" # E.g: vpc-fin-nonprod-subnetBits, vpc-sec-prod-subnetBits

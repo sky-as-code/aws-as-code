@@ -1,0 +1,181 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Metadata:
+  License: MIT
+Description: 'Sky-As-Code organisation, AWS-As-Code repository.
+  VPC with one public subnet and two private subnets, abided by following Common context: Resource tagging compliance, AWS Region compliance.
+  **NOTICE** You won't be billed for the AWS resources used if you create a stack from this template.'
+Parameters:
+  # For Organisation compliance
+  CostCenter:
+    Description: The department code.
+    Type: String
+  EnvironmentType:
+    Description: The deployment environment type.
+    Type: String
+
+  # For this stack
+  VPCName:
+    Description: Last part of VPC instance, it will be prepended with a prefix.
+    Type: String
+
+  AvailabilityZone:
+    Description: The Availability Zone of the instance.
+      If not specified, an Availability Zone will be automatically chosen for you based on the load balancing criteria for the Region.
+    Type: String # Use type String to prevent Cloudformation from validating and failing before we have chance to reach below !If condition.
+    Default: ''
+  InstanceName:
+    Description: Last part of EC2 instance name, it will be prepended with a prefix.
+    Type: String
+  InstanceType:
+    Description: EC2 instance type.
+    Type: String
+    AllowedValues: [t2.micro, t3.micro]
+    ConstraintDescription: must be a free-tier eligible EC2 instance type.
+  AmiId:
+    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+    Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2' # See: https://docs.aws.amazon.com/systems-manager/latest/userguide/parameter-store-public-parameters-ami.html
+  
+Mappings:
+  CidrConfig:
+    VPC:
+      CIDR: "10.0.0.0/16"
+    Public0:
+      CIDR: "10.0.0.0/24"
+    Private0:
+      CIDR: "10.0.2.0/24"
+    Private1:
+      CIDR: "10.0.3.0/24"
+
+  # This mapping accounts for the scenario when certain AZs
+  # are not available to use (this differs on a per account
+  # per customer basis). E.g., if the 'c' AZ is not available
+  # in a specific region in one's account then updating the
+  # list contained in the mapping below here will allow a
+  # different AZ to be chosen.
+  AzRegions:
+      ap-southeast-1:
+        AZs: ["b", "c"]
+      eu-central-1:
+        AZs: ["a", "b"]
+      us-east-1:
+        AZs: ["d", "e"]
+
+  CommonTags:
+    Billing:
+      - Key: Application
+        Value: !Ref Application
+      - Key: CostCenter
+        Value: !Ref CostCenter
+      - Key: Environment
+        Value: !Ref Environment
+
+# Conditions:
+#   HasAZ: !Not
+#     - !Equals
+#       - !Ref AvailabilityZone
+#       - ''
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      CidrBlock:
+        Fn::FindInMap: [CidrConfig, VPC, CIDR]
+      Tags:
+        -
+          Key: "Name" # E.g: fin-nonprod-services-v1, sec-prod-tooling-v123
+          Value: !Join
+            - '-'
+            - - !Ref CostCenter
+              - !Ref EnvironmentType
+              - !Ref VPCName
+        - Key: EnvironmentType
+          Value: !Ref EnvironmentType
+
+  PublicSubnet0:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Sub
+        - "${AWS::Region}${AZ}" # From region name (us-east-1) to AZ name (us-east-1a
+        - AZ: !Select [ 0, !FindInMap [ AzRegions, !Ref AWS::Region, AZs ] ]
+      CidrBlock: !FindInMap:
+        - CidrConfig
+        - Public0
+        - CIDR
+      MapPublicIpOnLaunch: true # Only for public subnet
+      Tags:
+        - Key: "Name" # E.g: fin-nonprod-services-v1-public-a, sec-prod-tooling-v123-public-b
+          Value: !Join
+            - ''
+            - - !GetAtt VPC.Tags.Name
+              - '-public-'
+              - !Select [ 0, !FindInMap [ AzRegions, !Ref AWS::Region, AZs ] ]
+        - Key: EnvironmentType
+          Value: !Ref EnvironmentType
+        - Key: "NetworkVisibility"
+          Value: "Public"
+
+  PrivateSubnet0:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: VPC
+      AvailabilityZone:
+        Fn::Sub:
+          - "${AWS::Region}${AZ}"
+          - AZ: !Select [ 0, !FindInMap [ AzRegions, !Ref AWS::Region, AZs ] ]
+      CidrBlock:
+        Fn::FindInMap:
+          - CidrConfig
+          - Private0
+          - CIDR
+      Tags:
+        - Key: "Name"
+          Value: !Join
+            - ''
+            - - !GetAtt VPC.Tags.Name
+              - '-private-'
+              - !Select [ 0, !FindInMap [ AzRegions, !Ref AWS::Region, AZs ] ]
+        - Key: EnvironmentType
+          Value: !Ref EnvironmentType
+        - Key: "NetworkVisibility"
+          Value: "Private"
+
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: VPC
+      AvailabilityZone:
+        Fn::Sub:
+          - "${AWS::Region}${AZ}"
+          - AZ: !Select [ 1, !FindInMap [ AzRegions, !Ref AWS::Region, AZs ] ]
+      CidrBlock:
+        Fn::FindInMap:
+          - CidrConfig
+          - Private0
+          - CIDR
+      Tags:
+        - Key: "Name"
+          Value: !Join
+            - ''
+            - - !GetAtt VPC.Tags.Name
+              - '-private-'
+              - !Select [ 1, !FindInMap [ AzRegions, !Ref AWS::Region, AZs ] ]
+        - Key: EnvironmentType
+          Value: !Ref EnvironmentType
+        - Key: "NetworkVisibility"
+          Value: "Private"
+
+Outputs:
+  VPCId:
+    Description: "VPCId of VPC"
+    Value:
+      Ref: "VPC"
+    Export:
+      Name: !Sub
+        - "vpc-${CostCenter}-${EnvironmentType}" # E.g: vpc-fin-nonprod, vpc-sec-prod
+        - CostCenter: !Ref CostCenter
+          EnvironmentType: !Ref EnvironmentType
