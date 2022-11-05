@@ -1,0 +1,321 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Metadata:
+  License: MIT
+Description: "Sky-As-Code organisation, AWS-As-Code repository.
+  Create a VPC with IPv4 CIDR block, and 1 public, 2 private subnets.
+  All of them are abided by following Common context: Resource tagging compliance, AWS Region compliance.
+  **NOTICE** You won't be billed for the AWS resources used if you create a stack from this template."
+Parameters:
+  # For Organisation compliance
+  CostCenter:
+    Description: The department code.
+    Type: String
+  EnvironmentType:
+    Description: The deployment environment type.
+    Type: String
+
+  # For this stack
+  VpcName:
+    Description: Last part of VPC instance, it will be prepended with a prefix.
+    Type: String
+
+Mappings:
+  # This mapping accounts for the scenario when certain AZs
+  # are not available to use (this differs on a per account
+  # per customer basis). E.g., if the 'c' AZ is not available
+  # in a specific region in one's account then updating the
+  # list contained in the mapping below here will allow a
+  # different AZ to be chosen.
+  AzRegions:
+    ap-southeast-1:
+      AZs: [b, c]
+    eu-central-1:
+      AZs: [a, b]
+    us-east-1:
+      AZs: [d, e]
+
+  CidrConfig:
+    VPC:
+      CIDR: "10.8.0.0/16"
+    Public0:
+      CIDR: "10.8.0.0/24"
+    Private0:
+      CIDR: "10.8.2.0/24"
+    Private1:
+      CIDR: "10.8.3.0/24"
+
+Conditions:
+  ShouldCreateVpc: !Not
+    - !Equals
+      - !Select [0, !FindInMap [AzRegions, !Ref "AWS::Region", AZs] ]
+      - ""
+
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Condition: ShouldCreateVpc
+    Properties:
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      CidrBlock: !FindInMap [CidrConfig, VPC, CIDR]
+      Tags:
+        -
+          Key: Name # E.g: fin-nonprod-services-v1, sec-prod-tooling-v123
+          Value: !Join
+            - "-"
+            - - !Ref CostCenter
+              - !Ref EnvironmentType
+              - !Ref VpcName
+        - Key: EnvironmentType
+          Value: !Ref EnvironmentType
+
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Sub
+        - "${AWS::Region}${AZ}" # From region name (us-east-1) to AZ name (us-east-1a
+        - AZ: !Select [ 0, !FindInMap [ AzRegions, !Ref AWS::Region, AZs ] ]
+      CidrBlock: !FindInMap [CidrConfig, Public0, CIDR]
+      MapPublicIpOnLaunch: true # Only for public subnet
+      Tags:
+        - Key: Name # E.g: fin-nonprod-services-v1-public-a, sec-prod-tooling-v123-public-b
+          Value: !Join
+            - ""
+            - - !Ref CostCenter
+              - !Ref EnvironmentType
+              - !Ref VpcName
+              - '-public-'
+              - !Select [ 0, !FindInMap [ AzRegions, !Ref AWS::Region, AZs ] ]
+        - Key: EnvironmentType
+          Value: !Ref EnvironmentType
+        - Key: Network
+          Value: public
+
+  PrivateSubnet0:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: VPC
+      AvailabilityZone:
+        Fn::Sub:
+          - "${AWS::Region}${AZ}"
+          - AZ: !Select [ 0, !FindInMap [ AzRegions, !Ref AWS::Region, AZs ] ]
+      CidrBlock:
+        Fn::FindInMap:
+          - CidrConfig
+          - Private0
+          - CIDR
+      Tags:
+        - Key: Name
+          Value: !Join
+            - "-"
+            - - !Ref CostCenter
+              - !Ref EnvironmentType
+              - !Ref VpcName
+              - "private"
+              - !Select [ 0, !FindInMap [ AzRegions, !Ref AWS::Region, AZs ] ]
+        - Key: EnvironmentType
+          Value: !Ref EnvironmentType
+        - Key: Network
+          Value: private
+
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: VPC
+      AvailabilityZone:
+        Fn::Sub:
+          - "${AWS::Region}${AZ}"
+          - AZ: !Select [ 1, !FindInMap [ AzRegions, !Ref AWS::Region, AZs ] ]
+      CidrBlock:
+        Fn::FindInMap:
+          - CidrConfig
+          - Private1
+          - CIDR
+      Tags:
+        - Key: Name
+          Value: !Join
+            - "-"
+            - - !Ref CostCenter
+              - !Ref EnvironmentType
+              - !Ref VpcName
+              - "private"
+              - !Select [ 1, !FindInMap [ AzRegions, !Ref AWS::Region, AZs ] ]
+        - Key: EnvironmentType
+          Value: !Ref EnvironmentType
+        - Key: Network
+          Value: private
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Join
+            - "-"
+            - - !Ref CostCenter
+              - !Ref EnvironmentType
+              - igw
+        - Key: EnvironmentType
+          Value: !Ref EnvironmentType
+        - Key: Network
+          Value: public
+
+  GatewayToInternet:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Join
+            - "-"
+            - - !Ref CostCenter
+              - !Ref EnvironmentType
+              - !Ref VpcName
+              - "public-route-table"
+        - Key: EnvironmentType
+          Value: !Ref EnvironmentType
+        - Key: Network
+          Value: public
+
+  PublicRouteToInternet:
+    Type: AWS::EC2::Route
+    DependsOn: GatewayToInternet
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  PublicSubnetRouteTableAssociation0:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet
+      RouteTableId: !Ref PublicRouteTable
+
+  PublicNetworkAcl:
+    Type: AWS::EC2::NetworkAcl
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Join
+            - "-"
+            - - !Ref CostCenter
+              - !Ref EnvironmentType
+              - !Ref VpcName
+              - 'public-nacl'
+        - Key: EnvironmentType
+          Value: !Ref EnvironmentType
+        - Key: Network
+          Value: public
+
+  InboundHTTPPublicNetworkAclEntry:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties:
+      NetworkAclId: !Ref PublicNetworkAcl
+      RuleNumber: "100"
+      Protocol: "-1"
+      RuleAction: "allow"
+      Egress: "false"
+      CidrBlock: "0.0.0.0/0"
+      PortRange:
+        From: "0"
+        To: "65535"
+
+  OutboundPublicNetworkAclEntry:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties:
+      NetworkAclId: !Ref PublicNetworkAcl
+      RuleNumber: "100"
+      Protocol: "-1"
+      RuleAction: "allow"
+      Egress: "true"
+      CidrBlock: "0.0.0.0/0"
+      PortRange:
+        From: "0"
+        To: "65535"
+
+  PublicSubnetNetworkAclAssociation0:
+    Type: AWS::EC2::SubnetNetworkAclAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet
+      NetworkAclId: !Ref PublicNetworkAcl
+
+  PrivateRouteTable0:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Join
+            - "-"
+            - - !Ref CostCenter
+              - !Ref EnvironmentType
+              - !Ref VpcName
+              - "private-route-table-0"
+        - Key: EnvironmentType
+          Value: !Ref EnvironmentType
+        - Key: Network
+          Value: private
+
+  PrivateRouteTable1:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Join
+            - "-"
+            - - !Ref CostCenter
+              - !Ref EnvironmentType
+              - !Ref VpcName
+              - "private-route-table-1"
+        - Key: EnvironmentType
+          Value: !Ref EnvironmentType
+        - Key: Network
+          Value: private
+
+  PrivateSubnetRouteTableAssociation0:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet0
+      RouteTableId: !Ref PrivateRouteTable0
+
+  PrivateSubnetRouteTableAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet1
+      RouteTableId: !Ref PrivateRouteTable1
+
+Outputs:
+  VpcId:
+    Description: ID of created VPC
+    Value: !Ref VPC
+    Export:
+      Name: !Sub "${CostCenter}-${EnvironmentType}-vpc-id" # E.g: fin-nonprod-vpc-id, sec-prod-vpc-id
+
+  PublicSubnetId:
+    Description: ID of created public subnet
+    Value: !Ref PublicSubnet
+    Export:
+      Name: !Sub "${CostCenter}-${EnvironmentType}-public-subnet-id" # E.g: fin-nonprod-public-subnet-id, sec-prod-public-subnet-id
+
+  PrivateSubnetId0:
+    Description: "ID of created private subnet #1"
+    Value: !Ref PrivateSubnet0
+    Export:
+      Name: !Sub "${CostCenter}-${EnvironmentType}-private-subnet-id-0" # E.g: fin-nonprod-private-subnet-id-0, sec-prod-private-subnet-id-0
+
+  PrivateSubnetId1:
+    Description: "ID of created private subnet #2"
+    Value: !Ref PrivateSubnet1
+    Export:
+      Name: !Sub "${CostCenter}-${EnvironmentType}-private-subnet-id-1" # E.g: fin-nonprod-private-subnet-id-1, sec-prod-private-subnet-id-1

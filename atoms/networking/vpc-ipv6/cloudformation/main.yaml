@@ -27,24 +27,18 @@ Parameters:
     MaxValue: 30
 
 Mappings:
-  # This mapping accounts for the scenario when certain AZs
-  # are not available to use (this differs on a per account
-  # per customer basis). E.g., if the 'c' AZ is not available
-  # in a specific region in one's account then updating the
-  # list contained in the mapping below here will allow a
-  # different AZ to be chosen.
-  AzRegions:
+  AllowedRegions:
     ap-southeast-1:
-      AZs: [b, c]
+      Allowed: true
     eu-central-1:
-      AZs: [a, b]
+      Allowed: true
     us-east-1:
-      AZs: [d, e]
+      Allowed: true
 
 Conditions:
   ShouldCreateVpc: !Not
     - !Equals
-      - !Select [0, !FindInMap [AzRegions, !Ref "AWS::Region", AZs] ]
+      - !FindInMap [AllowedRegions, !Ref "AWS::Region", Allowed]
       - ''
 
 Resources:
@@ -73,23 +67,23 @@ Resources:
         VpcId: !Ref VPC
 
 Outputs:
-  VPCId:
-    Description: VPCId of VPC
+  VpcId:
+    Description: ID of created VPC
     Value: !Ref VPC
     Export:
-      Name: !Sub "vpc-${CostCenter}-${EnvironmentType}-id" # E.g: vpc-fin-nonprod-id, vpc-sec-prod-id
+      Name: !Sub "${CostCenter}-${EnvironmentType}-vpc-id" # E.g: fin-nonprod-vpc-id, sec-prod-vpc-id
 
   NetworkAddressIpV4:
     Description: 'The IP address part of the IPv4 CIDR block, before slash (/). E.g: 10.0.0.0'
     Value: !Ref NetworkAddressIpV4
     Export:
-      Name: !Sub "vpc-${CostCenter}-${EnvironmentType}-networkAddressIpV4" # E.g: vpc-fin-nonprod-networkAddressIpV4, vpc-sec-prod-networkAddressIpV4
+      Name: !Sub "${CostCenter}-${EnvironmentType}-vpc-networkAddressIpV4" # E.g: fin-nonprod-vpc-networkAddressIpV4, sec-prod-vpc-networkAddressIpV4
 
   CidrBlockSizeIpV4:
     Description: 'The bits part of the IPv4 CIDR block, after slash (/). E.g: 8, 16, 24'
     Value: !Ref CidrBlockSizeIpV4
     Export:
-      Name: !Sub "vpc-${CostCenter}-${EnvironmentType}-cidrBlockSizeIpV4" # E.g: vpc-fin-nonprod-cidrBlockSizeIpV4, vpc-sec-prod-cidrBlockSizeIpV4
+      Name: !Sub "${CostCenter}-${EnvironmentType}-vpc-cidrBlockSizeIpV4" # E.g: fin-nonprod-vpc-cidrBlockSizeIpV4, v-sec-prod-vpc-cidrBlockSizeIpV4
 
   NetworkAddressIpV6:
     Description: 'The IP address part of the IPv6 CIDR block, before slash (/). E.g: 2001:db8:1234:1a00::, 2406:da18:f21:d900:0:0:0:0'
@@ -99,10 +93,10 @@ Outputs:
         - '/'
         - !Select [ 0, !Cidr [ !Select [ 0, !GetAtt VPC.Ipv6CidrBlocks], 1, 56 ]] # The IPv6 CIDR block size is fixed at /56
     Export:
-      Name: !Sub "vpc-${CostCenter}-${EnvironmentType}-networkAddressIpV6" # E.g: vpc-fin-nonprod-networkAddressIpV6, vpc-sec-prod-networkAddressIpV6
+      Name: !Sub "${CostCenter}-${EnvironmentType}-vpc-networkAddressIpV6" # E.g: fin-nonprod-vpc-networkAddressIpV6, sec-prod-vpc-networkAddressIpV6
 
   CidrBlockSizeIpV6:
     Description: 'The bits part of the IPv6 CIDR block, after slash (/). E.g: 56, 64'
     Value: '56'
     Export:
-      Name: !Sub "vpc-${CostCenter}-${EnvironmentType}-cidrBlockSizeIpV6" # E.g: vpc-fin-nonprod-cidrBlockSizeIpV6, vpc-sec-prod-cidrBlockSizeIpV6
+      Name: !Sub "${CostCenter}-${EnvironmentType}-vpc-cidrBlockSizeIpV6" # E.g: fin-nonprod-vpc-cidrBlockSizeIpV6, sec-prod-vpc-cidrBlockSizeIpV6

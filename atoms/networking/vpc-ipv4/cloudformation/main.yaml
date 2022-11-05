@@ -27,24 +27,18 @@ Parameters:
     MaxValue: 30
 
 Mappings:
-  # This mapping accounts for the scenario when certain AZs
-  # are not available to use (this differs on a per account
-  # per customer basis). E.g., if the 'c' AZ is not available
-  # in a specific region in one's account then updating the
-  # list contained in the mapping below here will allow a
-  # different AZ to be chosen.
-  AzRegions:
+  AllowedRegions:
     ap-southeast-1:
-      AZs: [b, c]
+      Allowed: "true"
     eu-central-1:
-      AZs: [a, b]
+      Allowed: "true"
     us-east-1:
-      AZs: [d, e]
+      Allowed: "true"
 
 Conditions:
   ShouldCreateVpc: !Not
     - !Equals
-      - !Select [0, !FindInMap [AzRegions, !Ref "AWS::Region", AZs] ]
+      - !FindInMap [AllowedRegions, !Ref "AWS::Region", Allowed]
       - ''
 
 Resources:
@@ -71,16 +65,16 @@ Outputs:
     Description: VPCId of VPC
     Value: !Ref VPC
     Export:
-      Name: !Sub "vpc-${CostCenter}-${EnvironmentType}-id" # E.g: vpc-fin-nonprod-id, vpc-sec-prod-id
+      Name: !Sub "${CostCenter}-${EnvironmentType}-vpc-id" # E.g: fin-nonprod-vpc-id, sec-prod-vpc-id
 
   NetworkAddressIpV4:
     Description: 'The IP address part of the CIDR block, before slash (/). E.g: 10.0.0.0'
     Value: !Ref NetworkAddressIpV4
     Export:
-      Name: !Sub "vpc-${CostCenter}-${EnvironmentType}-networkAddressIpV4" # E.g: vpc-fin-nonprod-networkAddressIpV4, vpc-sec-prod-networkAddressIpV4
+      Name: !Sub "${CostCenter}-${EnvironmentType}-vpc-networkAddressIpV4" # E.g: fin-nonprod-vpc-networkAddressIpV4, sec-prod-vpc-networkAddressIpV4
 
   CidrBlockSizeIpV4:
     Description: 'The bits part of the CIDR block, after slash (/). E.g: 8, 16, 24'
     Value: !Ref CidrBlockSizeIpV4
     Export:
-      Name: !Sub "vpc-${CostCenter}-${EnvironmentType}-cidrBlockSizeIpV4" # E.g: vpc-fin-nonprod-cidrBlockSizeIpV4, vpc-sec-prod-cidrBlockSizeIpV4
+      Name: !Sub "${CostCenter}-${EnvironmentType}-vpc-cidrBlockSizeIpV4" # E.g: fin-nonprod-vpc-cidrBlockSizeIpV4, sec-prod-vpc-cidrBlockSizeIpV4

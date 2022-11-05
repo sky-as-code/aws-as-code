@@ -39,7 +39,7 @@ We are aware of our imperfection, so this repository is supposed to bring about 
 
 As we aim to design as close to real-life scenarios as possible, some challenges require some of below compliances beside their own requirements:
 
-**Account compliance**
+**Organization compliance**
 
 You are tasked to implement the infrastructure for an organization with the following details:
 
