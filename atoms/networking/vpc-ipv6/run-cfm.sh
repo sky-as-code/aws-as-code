@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-STACK_NAME='vpc-ipv4'
+STACK_NAME='vpc-ipv6'
 VPC_NAME='services-v1'
 NETWORK_ADDR='10.0.0.0'
 NETWORK_BITS=16

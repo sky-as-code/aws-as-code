@@ -17,6 +17,8 @@ We are aware of our imperfection, so this repository is supposed to bring about 
   * [EBS](#ebs)
   * [KMS](#kms)
   * [S3](#s3)
+  * [VPC](#vpc)
+* [Challenge index (by compliance)](#challenge-index-by-compliance)
 
 ## Getting started
 
@@ -31,15 +33,15 @@ We are aware of our imperfection, so this repository is supposed to bring about 
 
 3. You can peek at the script files `*.sh` in challenge folders to see how your solution is invoked.
 
-4. You can reuse the code of solved challenges in later challenge, using [Cloudformation Module](https://aws.amazon.com/blogs/mt/share-reusable-infrastructure-code-aws-cloudformation-modules-and-stacksets/) or Terraform Module.
+4. You can reuse the code of solved challenges in later challenges, using [Cloudformation Module](https://aws.amazon.com/blogs/mt/share-reusable-infrastructure-code-aws-cloudformation-modules-and-stacksets/), Cloudformation exported values, or Terraform Module.
 
 ## Common context
 
-As we aim to design as close to real-life scenarios as possible, all of the challenges share this common context, except when overriden explicitly in one's own description:
-
-You are tasked to implement the infrastructure for an organization with the following details:
+As we aim to design as close to real-life scenarios as possible, some challenges require some of below compliances beside their own requirements:
 
 **Account compliance**
+
+You are tasked to implement the infrastructure for an organization with the following details:
 
 > Organization name: **Sky-As-Code corp.**<br>
 > Organization code: `sac`<br>
@@ -139,3 +141,16 @@ Kindly refer to [CONTRIBUTING.md](./CONTRIBUTING.md).
   - s3-bucket-sse-s3
   - s3-bucket-sse-kms
   - s3-bucket-web-hosting
+
+### **VPC**
+  - [vpc-ipv4](./atoms/networking/vpc-ipv4)
+  - [vpc-ipv6](./atoms/networking/vpc-ipv6)
+
+## Challenge index (by compliance)
+
+### **Resource tagging compliance**
+All challenges
+
+### **AWS Region compliance**
+  - [vpc-ipv4](./atoms/networking/vpc-ipv4)
+  - [vpc-ipv6](./atoms/networking/vpc-ipv6)

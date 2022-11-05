@@ -1,6 +1,11 @@
-# Challenge: Single EC2 Instance
+# Challenge: Create a single EC2 Instance
 
-## Description
+## Table of content
+* [Problem description](#problem-description)
+* [Solutions](#solutions)
+* [What we learnt](#what-we-learnt)
+
+## Problem description
 
 Create a single EC2 Instance abided by following [Common context](../../../README.md#common-context):
   * Resource tagging compliance.
@@ -83,7 +88,7 @@ The solution must be generic enough to be reused by whatever department.
 
     *Type*: String
 
-## Solution
+## Solutions
 
 ### **Cloudformation**
 
