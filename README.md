@@ -1,5 +1,5 @@
 # AWS-as-code
-A collection of AWS hands-on challenges.
+A collection of AWS hands-on labs / challenges with source code solution.
 
 Each challenge has a description and solutions in Cloudformation, AWS CLI and Terraform. You should try to solve the described problem yourself before looking at solutions.
 
@@ -29,7 +29,7 @@ We are aware of our imperfection, so this repository is supposed to bring about 
     * **Molecules**: Involving 2, up to 3 AWS services, not counting their subordinate resources.
     * **Organisms**: Involving more than 3 AWS services, not counting their subordinate resources.
 
-2. Read the description in README.md file in each challenge folder *carefully*. Note down the resources required to be created and inputs, outputs of the solution. Mandatory or optional inputs may considerably take more effort to implement.
+2. Read the description in README.md file in each challenge folder *carefully*. Note down the resources required to be created and inputs, outputs of the solution. Mandatory or optional inputs may considerably take more effort to implement (looking at you, [ec2-instance](./atoms/compute/ec2-instance)).
 
 3. You can peek at the script files `*.sh` in challenge folders to see how your solution is invoked.
 
@@ -39,12 +39,31 @@ We are aware of our imperfection, so this repository is supposed to bring about 
 
 As we aim to design as close to real-life scenarios as possible, some challenges require some of below compliances beside their own requirements:
 
+**Single account compliance**
+
+You are tasked to implement the infrastructure in a single AWS Account for a company with the following details:
+
+> Company name: **Sky-As-Code corp.**<br>
+> Company code: `sac`<br>
+
+> #1 department name: **Financial**<br>
+> #1 department code: `fin`<br>
+
+> #2 department name: **Sales**<br>
+> #2 department code: `sales`<br>
+
+> #3 department name: **Security**<br>
+> #3 department code: `sec`<br>
+
+> There are 4 deployment environments: `dev`, `sit`, `stg` and `prod`.<br/>
+> These environments belong to 2 environment types: `nonprod` (includes `dev`, `sit`) and `prod` (includes `stg`, `prod`).
+
 **Organization compliance**
 
-You are tasked to implement the infrastructure for an organization with the following details:
+You are tasked to implement the infrastructure using AWS Organization for an enterprise with the following details:
 
-> Organization name: **Sky-As-Code corp.**<br>
-> Organization code: `sac`<br>
+> Enterprise name: **Sky-As-Code corp.**<br>
+> Enterprise code: `sac`<br>
 
 > #1 department name: **Financial**<br>
 > #1 department code: `fin`<br>
@@ -95,7 +114,7 @@ Kindly refer to [CONTRIBUTING.md](./CONTRIBUTING.md).
 **A:** You are welcomed to [create a ticket](https://github.com/sky-as-code/aws-as-code/issues) giving links to the best practices, or [raise a pull request](https://github.com/sky-as-code/aws-as-code/pulls) if you have free time, just make sure to include links to sources where you base your opinion on. And don't forget to read [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 **Q:** *Are the solutions safe to use in my company's production environment?*<br>
-**A:** You are safe to use source code in this repository for your company's commercial purpose under MIT licence. However, about security and best practice aspects, although we are trying to make them as safe for real-life use as possible, you had better enrich yourself knowledge to decide how to apply the solutions in this repository to your company's production.
+**A:** You are safe to use source code in this repository for your company's commercial purpose under MIT license. However, about security and best practice aspects, although we are trying to make them as safe for real-life use as possible, you had better enrich yourself knowledge to decide how to apply the solutions in this repository to your company's production.
 
 ## Challenge index (by AWS service name)
 
@@ -136,7 +155,7 @@ Kindly refer to [CONTRIBUTING.md](./CONTRIBUTING.md).
   - s3-bucket-sse-kms
 
 ### **S3**
-  - [s3-bucket](./atoms/storage/s3-bucket)
+  - [s3-bucket-owner-full-control](./atoms/storage/s3-bucket-owner-full-control)
   - s3-bucket-lifecycle-policy
   - s3-bucket-sse-s3
   - s3-bucket-sse-kms
@@ -145,12 +164,14 @@ Kindly refer to [CONTRIBUTING.md](./CONTRIBUTING.md).
 ### **VPC**
   - [vpc-ipv4](./atoms/networking/vpc-ipv4)
   - [vpc-ipv6](./atoms/networking/vpc-ipv6)
+  - [vpc-public-private-subnets](./molecules/networking/vpc-public-private-subnets)
 
 ## Challenge index (by compliance)
 
 ### **Resource tagging compliance**
-All challenges
+  - All challenges
 
 ### **AWS Region compliance**
   - [vpc-ipv4](./atoms/networking/vpc-ipv4)
   - [vpc-ipv6](./atoms/networking/vpc-ipv6)
+  - [vpc-public-private-subnets](./molecules/networking/vpc-public-private-subnets)

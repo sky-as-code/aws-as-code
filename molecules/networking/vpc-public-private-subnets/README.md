@@ -8,6 +8,7 @@
 ## Problem description
 
 Create a VPC with IPv4 CIDR block, and 1 public, 2 private subnets. All of them are abided by following [Common context](../../../README.md#common-context):
+  * Single account compliance.
   * Resource tagging compliance.
   * AWS Region compliance.
 
@@ -19,7 +20,7 @@ The solution may decide the CIDR blocks itself, or it may accept parameters for 
 
 **Input:**
   * `VpcName`<br>
-    Last part of VPC instance. The full instance name must be built with this format
+    Last part of VPC instance. The full name must be built with this format
     `{costCenter}-{environmentType}-{VpcName`}. For example: fin-nonprod-services-v1, sec-prod-tooling-v123...
 
     *Required*: Yes
@@ -77,6 +78,9 @@ The solution may decide the CIDR blocks itself, or it may accept parameters for 
     *Type*: String
 
 ## Solutions
+
+**NOTICE** The solution creates a VPC, an Internet gateway, 3 subnets and their corresponding Route tables, Network NACLs, all of which are free of charge.
+You won't be billed for the created resources if you execute the code.
 
 ### **Cloudformation**
 

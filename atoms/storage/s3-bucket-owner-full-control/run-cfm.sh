@@ -1,16 +1,21 @@
 #!/usr/bin/env bash
 
-STACK_NAME='ec2-instance'
-INSTANCE_NAME='webserver'
-INSTANCE_TYPE='t3.micro'
+STACK_NAME='s3-bucket-owner-full-control'
 
-APPLICATION='compute-challenge'
+# As bucket name must be globally unique, we add a suffix so that
+# everybody running this code won't have name collision error.
+DIFFERENTIATOR=$(date +%s)
+BUCKET_NAME="reports-$DIFFERENTIATOR"
+
+APPLICATION='storage-challenge'
 COST_CENTER='fin' # or 'sales', 'sec'
 ENV='dev' # or 'prod'
+BUCKET_FULL_NAME="${COST_CENTER}-${APPLICATION}-${ENV}-${BUCKET_NAME}"
 
 FILE_PATH=$(pwd)/cloudformation/main.yaml
 
 source ../../../common/shared-cfm.sh
+source ./s3-actions.sh
 
 createMyStack() {
 	createStack $STACK_NAME \
@@ -18,10 +23,7 @@ createMyStack() {
 		--parameters ParameterKey=Application,ParameterValue=$APPLICATION \
 					ParameterKey=CostCenter,ParameterValue=$COST_CENTER \
 					ParameterKey=Environment,ParameterValue=$ENV \
-					ParameterKey=InstanceType,ParameterValue=$INSTANCE_TYPE \
-					ParameterKey=InstanceName,ParameterValue=$INSTANCE_NAME
-					# ParameterKey=AmiId,ParameterValue='/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-ebs'
-					# ParameterKey=AvailabilityZone,ParameterValue='ap-southeast-1c'
+					ParameterKey=BucketName,ParameterValue=$BUCKET_NAME
 }
 
 updateMyStack() {
@@ -30,29 +32,37 @@ updateMyStack() {
 		--parameters ParameterKey=Application,ParameterValue=$APPLICATION \
 					ParameterKey=CostCenter,ParameterValue=$COST_CENTER \
 					ParameterKey=Environment,ParameterValue=$ENV \
-					ParameterKey=InstanceType,ParameterValue=$INSTANCE_TYPE \
-					ParameterKey=InstanceName,ParameterValue=$INSTANCE_NAME
+					ParameterKey=BucketName,ParameterValue=$BUCKET_NAME
 }
 
 set -e # Terminate script execution when an error occurs
 case $1 in
 	create)
 		createMyStack
+		# WARNING:
+		# Comment out this line if you don't want storage charge.
+		uploadData ./sample-data/waiste-drum.jpg $BUCKET_FULL_NAME
+		#
 		;;
 	update)
 		updateMyStack
 		;;
 	delete)
-		deleteStack
+		if [ -z "$2" ]; then
+			echo 'error: Must specify bucket full name as second parameter'
+			exit
+		fi
+		emptyBucket $2
+		deleteStack $STACK_NAME
 		;;
 	describe)
-		describeStack
+		describeStack $STACK_NAME
 		;;
 	exists)
-		stackExists
+		stackExists $STACK_NAME
 		;;
 	*)
-		usage
-		;;
+	usage
+	;;
 esac
 set +e # Back to default

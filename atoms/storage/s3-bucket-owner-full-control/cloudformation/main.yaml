@@ -1,0 +1,70 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Metadata:
+  License: MIT
+Description: "Sky-As-Code organisation, AWS-As-Code repository.
+  Create a single S3 Bucket abided by following Common context: Single account compliance, Resource tagging compliance, AWS Region compliance.
+  The bucket owner has full control over uploaded data.
+  **NOTICE** You won't be billed for the AWS resources used if you create a stack from this template."
+Parameters:
+  # For Resource tagging compliance
+  Application:
+    Description: Name of the application using this AWS resource.
+    Type: String
+  CostCenter:
+    Description: The department code.
+    Type: String
+  Environment:
+    Description: The deployment environment.
+    Type: String
+
+  # For this stack
+  BucketName:
+    Description: Last part of S3 Bucket, it will be prepended with a prefix.
+    Type: String
+
+Mappings:
+  AllowedRegions:
+    ap-southeast-1:
+      Allowed: "true"
+    eu-central-1:
+      Allowed: "true"
+    us-east-1:
+      Allowed: "true"
+
+Conditions:
+  ShouldCreateBucket: !Not
+    - !Equals
+      - !FindInMap [AllowedRegions, !Ref "AWS::Region", Allowed]
+      - ''
+
+Resources:
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Condition: ShouldCreateBucket
+    Properties:
+      BucketName: !Join
+        - '-'
+        - - !Ref CostCenter
+          - !Ref Application
+          - !Ref Environment
+          - !Ref BucketName
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: Application
+          Value: !Ref Application
+        - Key: CostCenter
+          Value: !Ref CostCenter
+        - Key: Environment
+          Value: !Ref Environment
+
+Outputs:
+  BucketName:
+    Description: Full name of created S3 Bucket
+    Value: !Ref S3Bucket

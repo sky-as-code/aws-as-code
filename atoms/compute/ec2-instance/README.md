@@ -8,6 +8,7 @@
 ## Problem description
 
 Create a single EC2 Instance abided by following [Common context](../../../README.md#common-context):
+  * Single account compliance.
   * Resource tagging compliance.
 
 The solution must be generic enough to be reused by whatever department.
@@ -40,7 +41,7 @@ The solution must be generic enough to be reused by whatever department.
     *Type*: String
 
   * `InstanceType`<br>
-    EC2 instance type. For wallet safety, only free-tier eligible instance types are allowed.
+    EC2 instance type. For wallet safety, only 12-month free-tier eligible instance types are allowed.
 
     *Required*: Yes
 
@@ -89,6 +90,9 @@ The solution must be generic enough to be reused by whatever department.
     *Type*: String
 
 ## Solutions
+
+**WARNING** The solution creates an EC2 Instance, you will be billed for the created resource if you execute the code
+when you have gone out of your 12-month free-tier.
 
 ### **Cloudformation**
 

@@ -1,11 +1,12 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Metadata:
   License: MIT
-Description: 'Sky-As-Code organisation, AWS-As-Code repository.
-  Create a single EC2 Instance abided by following Common context: Resource tagging compliance.
-  **WARNING** You will be billed for the AWS resources used if you create a stack from this template.'
+Description: "Sky-As-Code organisation, AWS-As-Code repository.
+  Create a single EC2 Instance abided by following Common context: Single account compliance, Resource tagging compliance.
+  **WARNING** You will be billed for the AWS resources used if you create a stack from this template,
+  and if you have gone out of your 12-month free-tier."
 Parameters:
-  # For Organisation compliance
+  # For Resource tagging compliance
   Application:
     Description: Name of the application using this AWS resource.
     Type: String

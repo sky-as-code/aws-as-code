@@ -2,10 +2,10 @@ AWSTemplateFormatVersion: '2010-09-09'
 Metadata:
   License: MIT
 Description: "Sky-As-Code organisation, AWS-As-Code repository.
-  Create a VPC with IPv4 CIDR block, abided by following Common context: Resource tagging compliance, AWS Region compliance.
+  Create a VPC with IPv4 CIDR block, abided by following Common context: Single account compliance, Resource tagging compliance, AWS Region compliance.
   **NOTICE** You won't be billed for the AWS resources used if you create a stack from this template."
 Parameters:
-  # For Organisation compliance
+  # For Resource tagging compliance
   CostCenter:
     Description: The department code.
     Type: String

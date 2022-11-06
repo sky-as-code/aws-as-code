@@ -8,6 +8,7 @@
 ## Problem description
 
 Create a VPC with IPv4 CIDR block, abided by following [Common context](../../../README.md#common-context):
+  * Single account compliance.
   * Resource tagging compliance.
   * AWS Region compliance.
 
@@ -15,7 +16,7 @@ The solution must be generic enough to be reused by whatever department.
 
 **Input:**
   * `VPCName`<br>
-    Last part of VPC instance. The full instance name must be built with this format
+    Last part of VPC instance. The full name must be built with this format
     `{costCenter}-{environmentType}-{VPCName`}. For example: fin-nonprod-services-v1, sec-prod-tooling-v123...
 
     *Required*: Yes
@@ -68,6 +69,8 @@ The solution must be generic enough to be reused by whatever department.
     *Type*: String
 
 ## Solutions
+
+**NOTICE** The solution creates a VPC, you won't be billed for the created resource if you execute the code.
 
 ### **Cloudformation**
 
