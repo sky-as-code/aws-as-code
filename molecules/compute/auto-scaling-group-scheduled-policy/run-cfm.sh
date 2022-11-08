@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-STACK_NAME='ec2-instance'
-INSTANCE_NAME='webserver'
-INSTANCE_TYPE='t3.micro'
+STACK_NAME='auto-scaling-group-scheduled-policy'
+GROUP_NAME='webservers'
+INSTANCE_TYPE='t2.micro'
 
 APPLICATION='compute-challenge'
 COST_CENTER='fin' # or 'sales', 'sec'
@@ -15,11 +15,12 @@ source ../../../common/shared-cfm.sh
 createMyStack() {
 	createStack $STACK_NAME \
 		--template-body file:///$FILE_PATH \
+		--capabilities CAPABILITY_AUTO_EXPAND \
 		--parameters ParameterKey=Application,ParameterValue=$APPLICATION \
 					ParameterKey=CostCenter,ParameterValue=$COST_CENTER \
 					ParameterKey=Environment,ParameterValue=$ENV \
-					ParameterKey=InstanceType,ParameterValue=$INSTANCE_TYPE \
-					ParameterKey=InstanceName,ParameterValue=$INSTANCE_NAME
+					ParameterKey=GroupName,ParameterValue=$GROUP_NAME \
+					ParameterKey=InstanceType,ParameterValue=$INSTANCE_TYPE
 					# ParameterKey=AmiId,ParameterValue='/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-ebs'
 					# ParameterKey=AvailabilityZone,ParameterValue='ap-southeast-1c'
 }
@@ -27,11 +28,12 @@ createMyStack() {
 updateMyStack() {
 	updateStack $STACK_NAME \
 		--template-body file:///$FILE_PATH \
+		--capabilities CAPABILITY_AUTO_EXPAND \
 		--parameters ParameterKey=Application,ParameterValue=$APPLICATION \
 					ParameterKey=CostCenter,ParameterValue=$COST_CENTER \
 					ParameterKey=Environment,ParameterValue=$ENV \
-					ParameterKey=InstanceType,ParameterValue=$INSTANCE_TYPE \
-					ParameterKey=InstanceName,ParameterValue=$INSTANCE_NAME
+					ParameterKey=GroupName,ParameterValue=$GROUP_NAME \
+					ParameterKey=InstanceType,ParameterValue=$INSTANCE_TYPE
 }
 
 set -e # Terminate script execution when an error occurs

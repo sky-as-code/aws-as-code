@@ -1,0 +1,179 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::LanguageExtensions'
+Metadata:
+  License: MIT
+Description: "Sky-As-Code organisation, AWS-As-Code repository.
+  Create an Auto Scaling Group with scheduled scaling policy, abided by following Common context: Single account compliance,
+  Resource tagging compliance, AWS Region compliance.
+  **WARNING** You will be billed for the AWS resources used if you create a stack from this template,
+  and if you have gone out of your 12-month free-tier."
+Parameters:
+  # For Resource tagging compliance
+  Application:
+    Description: Name of the application using this AWS resource.
+    Type: String
+  CostCenter:
+    Description: The department code.
+    Type: String
+  Environment:
+    Description: The deployment environment.
+    Type: String
+
+  # For this stack
+  AvailabilityZones:
+    Description: The Availability Zones where instances in the Auto Scaling group can be created.
+    Type: CommaDelimitedList
+    Default: ''
+  GroupName:
+    Description: Last part of ASG name, it will be prepended with a prefix.
+    Type: String
+  InstanceType:
+    Description: EC2 instance type.
+    Type: String
+    AllowedValues: [t2.micro, t3.micro]
+    ConstraintDescription: must be a free-tier eligible EC2 instance type.
+  AmiId:
+    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+    Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2' # See: https://docs.aws.amazon.com/systems-manager/latest/userguide/parameter-store-public-parameters-ami.html
+
+Mappings:
+  AllowedRegions:
+    ap-southeast-1:
+      Allowed: "true"
+    eu-central-1:
+      Allowed: "true"
+    us-east-1:
+      Allowed: "true"
+
+Conditions:
+  ShouldCreateVpc: !Not
+    - !Equals
+      - !FindInMap [AllowedRegions, !Ref "AWS::Region", Allowed]
+      - ''
+  HasAZs: !Not
+    - !Equals
+      - !Ref AvailabilityZone
+      - ''
+
+Resources:
+  AutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      AvailabilityZones: !If
+        - HasAZs
+        - !Split [",", !Ref AvailabilityZones]
+        - !GetAZs ''
+      AutoScalingGroupName: !Join
+        - '-'
+        - - !Ref CostCenter
+          - !Ref Application
+          - !Ref Environment
+          - !Ref GroupName
+      LaunchConfigurationName: !Ref LaunchConfig
+      MinSize: 1
+      MaxSize: 5
+      Tags:
+        - Key: Application
+          Value: !Ref Application
+          PropagateAtLaunch: true
+        - Key: CostCenter
+          Value: !Ref CostCenter
+          PropagateAtLaunch: true
+        - Key: Environment
+          Value: !Ref Environment
+          PropagateAtLaunch: true
+    CreationPolicy:
+      # Prevent AST from reaching complete state before Cloudformation stack receives
+      # cfn-signal from all new launched EC2 Instances.
+      # See more: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-as-group.html#aws-properties-as-group--remarks:~:text=prevent%20its%20status%20from%20reaching%20create%20complete
+      ResourceSignal:
+        Timeout: PT15M
+    UpdatePolicy:
+      AutoScalingRollingUpdate:
+        MinInstancesInService: 1
+        MaxBatchSize: 2
+        PauseTime: PT15M
+        # Suspend ASG update until receiving cfn-signal from all new launched EC2 Instances.
+        # See more: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-attribute-updatepolicy.html#cfn-attributes-updatepolicy-rollingupdate:~:text=use%20the%20cfn%2Dsignal%20helper%20script
+        WaitOnResourceSignals: true
+      AutoScalingScheduledAction:
+        # Prevent Cloudformation from resetting min size, max size, and desired capacity properties
+        # while Scheduled action is in effect.
+        # See more: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-attribute-updatepolicy.html#cfn-attributes-updatepolicy-scheduledactions
+        IgnoreUnmodifiedGroupSizeProperties: true
+
+  ScheduledActionUp:
+    Type: AWS::AutoScaling::ScheduledAction
+    Properties:
+      AutoScalingGroupName: !Ref AutoScalingGroup
+      MaxSize: 10
+      MinSize: 5
+      Recurrence: 0 7 * * *
+  ScheduledActionDown:
+    Type: AWS::AutoScaling::ScheduledAction
+    Properties:
+      AutoScalingGroupName: !Ref AutoScalingGroup
+      MaxSize: 1
+      MinSize: 5
+      Recurrence: 0 19 * * *
+
+  LaunchConfig:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Metadata:
+      Comment: Starts an EC2 Instance with up-to-date yum packages.
+      AWS::CloudFormation::Init:
+        config:
+          files:
+            /etc/cfn/cfn-hup.conf:
+              content: !Join ['', ['[main]
+
+                    ', stack=, !Ref 'AWS::StackId', '
+
+                    ', region=, !Ref 'AWS::Region', '
+
+                    ']]
+              mode: '000400'
+              owner: root
+              group: root
+            /etc/cfn/hooks.d/cfn-auto-reloader.conf:
+              content: !Join ['', ['[cfn-auto-reloader-hook]
+
+                    ', 'triggers=post.update
+
+                    ', 'path=Resources.LaunchConfig.Metadata.AWS::CloudFormation::Init
+
+                    ', 'action=/opt/aws/bin/cfn-init -v ', '         --stack ', !Ref 'AWS::StackName',
+                  '         --resource LaunchConfig ', '         --region ', !Ref 'AWS::Region',
+                  '
+                    ', 'runas=root
+
+                    ']]
+          services:
+            sysvinit:
+              cfn-hup:
+                enabled: true
+                ensureRunning: true
+                files: [/etc/cfn/cfn-hup.conf, /etc/cfn/hooks.d/cfn-auto-reloader.conf]
+    Properties:
+      ImageId: !Ref AmiId
+      # SecurityGroups: [!Ref 'InstanceSecurityGroup']
+      InstanceType: !Ref InstanceType
+      UserData: !Base64
+        Fn::Join:
+        - ''
+        - ['#!/bin/bash -xe
+
+            ', 'yum update -y aws-cfn-bootstrap
+
+            ', '/opt/aws/bin/cfn-init -v --stack ', !Ref 'AWS::StackName',
+          ' --resource LaunchConfig --region ', !Ref 'AWS::Region',
+          '
+            ', '/opt/aws/bin/cfn-signal -e $? --stack ', !Ref 'AWS::StackName',
+          ' --resource AutoScalingGroup --region ', !Ref 'AWS::Region',
+          '
+            ']
+
+Outputs:
+  AsgName:
+    Description: Full name of the newly created Auto Scaling Group.
+    Value: !Ref AutoScalingGroup
