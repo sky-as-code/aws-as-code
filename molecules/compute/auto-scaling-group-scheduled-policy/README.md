@@ -16,7 +16,7 @@ The solution must be generic enough to be reused by whatever department.
 
 **Input:**
   * `AmiId`<br>
-    [A public SSM Parameter path for AMI IDs](https://docs.aws.amazon.com/systems-manager/latest/userguide/parameter-store-public-parameters-ami.html).
+    [A public SSM Parameter path for AMI ID](https://docs.aws.amazon.com/systems-manager/latest/userguide/parameter-store-public-parameters-ami.html).
 
     *Required*: No
 
@@ -24,18 +24,17 @@ The solution must be generic enough to be reused by whatever department.
 
     *Type*: String
 
-  * `AvailabilityZone`<br>
-    The Availability Zone of the instance.<br>
-    If not specified, an Availability Zone will be automatically chosen based on
-    the load balancing criteria for the Region.
+  * `AvailabilityZones`<br>
+    A comma-separated list of Availability Zones where instances in the Auto Scaling group can be created.<br>
+    If not specified, default are all Availability Zone of current Region.
 
     *Required*: No
 
     *Type*: String
 
-  * `InstanceName`<br>
-    Last part of EC2 instance name. The full instance name must be built with this format
-    `{costCenter}-{application}-{environment}-{InstanceName}`. For example: sales-ecommerce-dev-webserver, fin-trend-analytics-prod-reportingserver...
+  * `GroupName`<br>
+    Last part of ASG name. The full instance name must be built with this format
+    `{costCenter}-{application}-{environment}-{GroupName}`. For example: sales-ecommerce-dev-webservers, fin-trend-analytics-prod-reportingservers...
 
     *Required*: Yes
 
@@ -70,34 +69,16 @@ The solution must be generic enough to be reused by whatever department.
     *Type*: String
 
 **Output:**
-  * `AvailabilityZone`<br>
-    The Availability Zone of the instance.
+  * `AsgName`<br>
+    Full name of the newly created Auto Scaling Group.
 
     *Type*: String
-
-  * `InstanceId`<br>
-    InstanceId of the newly created EC2 instance.
-
-    *Type*: String
-
-  * `PublicDNS`<br>
-    Public DNS name of the newly created EC2 instance.
-
-    *Type*: String
-
-  * `PublicIP`<br>
-    Public IP address of the newly created EC2 instance.
-
-    *Type*: String
-
 ## Solutions
 
-**WARNING** The solution creates an EC2 Instance, you will be billed for the created resource if you execute the code
+**WARNING** The solution creates an Auto Scaling Group with running EC2 Instances, you will be billed for the created resource if you execute the code
 when you have gone out of your 12-month free-tier.
 
 ### **Cloudformation**
-
-You can start with this template and modify it to satisfy this challenge: https://github.com/awslabs/aws-cloudformation-templates/blob/master/aws/services/EC2/EC2InstanceWithSecurityGroupSample.yaml
 
 To run this solution:
   - `cd` to this directory
@@ -105,6 +86,5 @@ To run this solution:
 
 ## What we learnt
 
-If a VPC isn't specified, and if your account is created before 2013-12-04, you have an option to launch EC2-Classic Instance outside VPC. If your account is after 2013-12-04, your new EC2 Instance will automatically be put in default VPC of the Region.
+How to use cfn-signal script together with Autoscaling Group's CreationPolicy's ResourceSignal.
 
-If Availability Zone isn't specified, an Availability Zone will be automatically chosen for your new EC2 Instance based on the balance criteria of the Region.

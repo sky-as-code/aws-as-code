@@ -20,9 +20,13 @@ Parameters:
     Type: String
 
   # For this stack
+  AmiId:
+    Description: A public SSM Parameter path for AMI ID.
+    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+    Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2' # See: https://docs.aws.amazon.com/systems-manager/latest/userguide/parameter-store-public-parameters-ami.html
   AvailabilityZones:
     Description: The Availability Zones where instances in the Auto Scaling group can be created.
-    Type: CommaDelimitedList
+    Type: String
     Default: ''
   GroupName:
     Description: Last part of ASG name, it will be prepended with a prefix.
@@ -32,9 +36,6 @@ Parameters:
     Type: String
     AllowedValues: [t2.micro, t3.micro]
     ConstraintDescription: must be a free-tier eligible EC2 instance type.
-  AmiId:
-    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
-    Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2' # See: https://docs.aws.amazon.com/systems-manager/latest/userguide/parameter-store-public-parameters-ami.html
 
 Mappings:
   AllowedRegions:
@@ -46,13 +47,13 @@ Mappings:
       Allowed: "true"
 
 Conditions:
-  ShouldCreateVpc: !Not
+  RegionIsAllowed: !Not
     - !Equals
       - !FindInMap [AllowedRegions, !Ref "AWS::Region", Allowed]
       - ''
   HasAZs: !Not
     - !Equals
-      - !Ref AvailabilityZone
+      - !Ref AvailabilityZones
       - ''
 
 Resources:
@@ -69,7 +70,9 @@ Resources:
           - !Ref Application
           - !Ref Environment
           - !Ref GroupName
-      LaunchConfigurationName: !Ref LaunchConfig
+      LaunchTemplate:
+        LaunchTemplateId: !Ref LaunchTemplate
+        Version: !GetAtt LaunchTemplate.LatestVersionNumber
       MinSize: 1
       MaxSize: 5
       Tags:
@@ -83,7 +86,7 @@ Resources:
           Value: !Ref Environment
           PropagateAtLaunch: true
     CreationPolicy:
-      # Prevent AST from reaching complete state before Cloudformation stack receives
+      # Prevent ASG from reaching complete state before Cloudformation stack receives
       # cfn-signal from all new launched EC2 Instances.
       # See more: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-as-group.html#aws-properties-as-group--remarks:~:text=prevent%20its%20status%20from%20reaching%20create%20complete
       ResourceSignal:
@@ -113,41 +116,32 @@ Resources:
     Type: AWS::AutoScaling::ScheduledAction
     Properties:
       AutoScalingGroupName: !Ref AutoScalingGroup
-      MaxSize: 1
-      MinSize: 5
+      MaxSize: 5
+      MinSize: 1
       Recurrence: 0 19 * * *
 
-  LaunchConfig:
-    Type: AWS::AutoScaling::LaunchConfiguration
+  LaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
     Metadata:
       Comment: Starts an EC2 Instance with up-to-date yum packages.
       AWS::CloudFormation::Init:
         config:
           files:
             /etc/cfn/cfn-hup.conf:
-              content: !Join ['', ['[main]
-
-                    ', stack=, !Ref 'AWS::StackId', '
-
-                    ', region=, !Ref 'AWS::Region', '
-
-                    ']]
+              content: !Sub |
+                [main]
+                stack=${AWS::StackId}
+                region=${AWS::Region}
               mode: '000400'
               owner: root
               group: root
             /etc/cfn/hooks.d/cfn-auto-reloader.conf:
-              content: !Join ['', ['[cfn-auto-reloader-hook]
-
-                    ', 'triggers=post.update
-
-                    ', 'path=Resources.LaunchConfig.Metadata.AWS::CloudFormation::Init
-
-                    ', 'action=/opt/aws/bin/cfn-init -v ', '         --stack ', !Ref 'AWS::StackName',
-                  '         --resource LaunchConfig ', '         --region ', !Ref 'AWS::Region',
-                  '
-                    ', 'runas=root
-
-                    ']]
+              content: !Sub |
+                [cfn-auto-reloader-hook]
+                triggers=post.update
+                path=Resources.LaunchTemplate.Metadata.AWS::CloudFormation::Init
+                action=/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource LaunchTemplate --region ${AWS::Region}
+                runas=root
           services:
             sysvinit:
               cfn-hup:
@@ -155,23 +149,45 @@ Resources:
                 ensureRunning: true
                 files: [/etc/cfn/cfn-hup.conf, /etc/cfn/hooks.d/cfn-auto-reloader.conf]
     Properties:
-      ImageId: !Ref AmiId
-      # SecurityGroups: [!Ref 'InstanceSecurityGroup']
-      InstanceType: !Ref InstanceType
-      UserData: !Base64
-        Fn::Join:
-        - ''
-        - ['#!/bin/bash -xe
-
-            ', 'yum update -y aws-cfn-bootstrap
-
-            ', '/opt/aws/bin/cfn-init -v --stack ', !Ref 'AWS::StackName',
-          ' --resource LaunchConfig --region ', !Ref 'AWS::Region',
-          '
-            ', '/opt/aws/bin/cfn-signal -e $? --stack ', !Ref 'AWS::StackName',
-          ' --resource AutoScalingGroup --region ', !Ref 'AWS::Region',
-          '
-            ']
+      LaunchTemplateName: !Join
+        - '-'
+        - - !Ref CostCenter
+          - !Ref Application
+          - !Ref Environment
+          - !Ref GroupName
+          - launch-template
+      LaunchTemplateData:
+        ImageId: !Ref AmiId
+        InstanceType: !Ref InstanceType
+        # IamInstanceProfile:
+        #   Name: !Ref myInstanceProfile
+        # SecurityGroups:
+        # - Ref! myNewEC2SecurityGroup
+        # - myExistingEC2SecurityGroup
+        TagSpecifications:
+          - ResourceType: instance
+            Tags:
+              - Key: Application
+                Value: !Ref Application
+              - Key: CostCenter
+                Value: !Ref CostCenter
+              - Key: Environment
+                Value: !Ref Environment
+          - ResourceType: volume
+            Tags:
+              - Key: Application
+                Value: !Ref Application
+              - Key: CostCenter
+                Value: !Ref CostCenter
+              - Key: Environment
+                Value: !Ref Environment
+        UserData:
+          Fn::Base64: !Sub |
+            #!/bin/bash -xe
+            exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
+            yum update -y aws-cfn-bootstrap
+            /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource LaunchTemplate --region ${AWS::Region}
+            /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource AutoScalingGroup --region ${AWS::Region}
 
 Outputs:
   AsgName:
