@@ -1,4 +1,4 @@
-# Challenge: Create a single EC2 Instance
+# Challenge: Create a Lambda function with inline source code
 
 ## Table of content
 * [Problem description](#problem-description)
@@ -7,7 +7,7 @@
 
 ## Problem description
 
-Create a Lambda function abided by following [Common context](../../../README.md#common-context):
+Create a Lambda function with inline source code. The function must abide by following [Common context](../../../README.md#common-context):
   * Single account compliance.
   * Resource tagging compliance.
 
