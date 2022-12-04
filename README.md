@@ -121,7 +121,7 @@ Kindly refer to [CONTRIBUTING.md](./CONTRIBUTING.md).
 *Note:* Some challenges are indexed multiple times because it involves many AWS services.
 
 ### **ASG**
-  - [auto-scaling-group-simple](./atoms/compute/auto-scaling-group-simple)
+  - [auto-scaling-group-scheduled-policy](./molecules/compute/auto-scaling-group-scheduled-policy)
   - auto-scaling-group-step
   - auto-scaling-group-targettracking
 
@@ -153,6 +153,9 @@ Kindly refer to [CONTRIBUTING.md](./CONTRIBUTING.md).
   - kms-symmetric-key
   - kms-symmetric-datakey
   - s3-bucket-sse-kms
+
+### **Lambda**
+  - [lambda-inline](./atoms/compute/lambda-inline/)
 
 ### **S3**
   - [s3-bucket-owner-full-control](./atoms/storage/s3-bucket-owner-full-control)

@@ -1,0 +1,122 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Metadata:
+  License: MIT
+Description: "Sky-As-Code organisation, AWS-As-Code repository.
+  Create a Lambda function abided by following Common context: Single account compliance, Resource tagging compliance.
+  **WARNING** You will be billed for the AWS resources used if you create a stack from this template."
+Parameters:
+  # For Resource tagging compliance
+  Application:
+    Description: Name of the application using this AWS resource.
+    Type: String
+  CostCenter:
+    Description: The department code.
+    Type: String
+  Environment:
+    Description: The deployment environment.
+    Type: String
+
+  # For this stack
+  LambdaName:
+    Description: Last part of Lambda function name, it will be prepended with a prefix.
+    Type: String
+  MemorySize:
+    Description: The amount of memory available to the function at runtime.
+    Type: Number
+    Default: 128
+    MaxValue: 10240
+    MinValue: 128
+  Timeout:
+    Description: The amount of time (in seconds) that Lambda allows a function to run before stopping it.
+    Type: Number
+    Default: 3
+    MaxValue: 900
+    MinValue: 1
+
+Resources:
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${CostCenter}-${Application}-${Environment}-${LambdaName}"
+      Tags:
+        - Key: Application
+          Value: !Ref Application
+        - Key: CostCenter
+          Value: !Ref CostCenter
+        - Key: Environment
+          Value: !Ref Environment
+
+  IamRoleLambdaExecution:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: !Join
+      - "/"
+      - - ""
+        - !Ref CostCenter
+        - !Ref Application
+        - !Ref Environment
+        - ""
+      RoleName: !Sub "${CostCenter}-${Application}-${Environment}-${LambdaName}-role"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action: sts:AssumeRole
+      ManagedPolicyArns: 
+      - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+      Policies:
+      - PolicyName: !Sub "${CostCenter}-${Application}-${Environment}-${LambdaName}-policy"
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+          - Effect: Allow
+            Action:
+            - logs:CreateLogStream
+            - logs:CreateLogGroup
+            - logs:PutLogEvents
+            Resource:
+            - !Sub "${LogGroup.Arn}"
+      Tags:
+        - Key: Application
+          Value: !Ref Application
+        - Key: CostCenter
+          Value: !Ref CostCenter
+        - Key: Environment
+          Value: !Ref Environment
+
+  LambdaSayHello:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "${CostCenter}-${Application}-${Environment}-${LambdaName}"
+      Runtime: nodejs18.x
+      MemorySize: !Ref MemorySize
+      Timeout: !Ref Timeout
+      Role: !GetAtt IamRoleLambdaExecution.Arn
+      Handler: index.handler
+      Code:
+        ZipFile: |
+          exports.handler = async (event, context) => {
+            return `Hello ${event.name}, I'm from department ${process.env.DEPARTMENT} on ${process.env.ENVIRONMENT}`;
+          };
+      Environment:
+        Variables:
+          DEPARTMENT: !Ref CostCenter
+          ENVIRONMENT: !Ref Environment
+      Tags:
+        - Key: Application
+          Value: !Ref Application
+        - Key: CostCenter
+          Value: !Ref CostCenter
+        - Key: Environment
+          Value: !Ref Environment
+
+Outputs:
+  LambdaFullName:
+    Description: Full name of the newly created Lambda function.
+    Value: !Ref LambdaSayHello
+  LambdaArn:
+    Description: ARN of the newly created Lambda function.
+    Value: !GetAtt LambdaSayHello.Arn
