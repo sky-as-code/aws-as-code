@@ -1,0 +1,329 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Metadata:
+  License: MIT
+Description: "Sky-As-Code organisation, AWS-As-Code repository.
+  Create a single EC2 Instance abided by following Common context: Single account compliance, Resource tagging compliance.
+  **WARNING** You will be billed for the AWS resources used if you create a stack from this template,
+  and if you have gone out of your 12-month free-tier."
+Parameters:
+  # For Resource tagging compliance
+  Application:
+    Description: Name of the application using this AWS resource.
+    Type: String
+  CostCenter:
+    Description: The department code.
+    Type: String
+  Environment:
+    Description: The deployment environment.
+    Type: String
+
+Resources:
+  DynamoDBTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Join
+        - '-'
+        - - !Ref CostCenter
+          - !Ref Application
+          - !Ref Environment
+          - books
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: Id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: Id
+          KeyType: HASH
+      Tags:
+        - Key: Name
+          Value: !Join
+            - '-'
+            - - !Ref CostCenter
+              - !Ref Application
+              - !Ref Environment
+              - books
+        - Key: Application
+          Value: !Ref Application
+        - Key: CostCenter
+          Value: !Ref CostCenter
+        - Key: Environment
+          Value: !Ref Environment
+
+  CognitoUsers:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Join
+        - '-'
+        - - !Ref CostCenter
+          - !Ref Environment
+          - users
+      UsernameConfiguration:
+        CaseSensitive: false
+      AccountRecoverySetting:
+        RecoveryMechanisms:
+          - Name: verified_email
+            Priority: 1
+      AdminCreateUserConfig:
+        AllowAdminCreateUserOnly: false
+      AutoVerifiedAttributes:
+        - email
+      UserAttributeUpdateSettings:
+        AttributesRequireVerificationBeforeUpdate:
+          - email
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireLowercase: true
+          RequireUppercase: true
+          RequireSymbols: false
+          RequireNumbers: false
+          TemporaryPasswordValidityDays: 1
+      UsernameAttributes:
+        - email
+      MfaConfiguration: 'OFF'
+      Schema:
+        - Name: email
+          AttributeDataType: String
+          Required: true
+          DeveloperOnlyAttribute: false
+          Mutable: true
+        - Name: name
+          AttributeDataType: String
+          Required: true
+          DeveloperOnlyAttribute: false
+          Mutable: true
+      EmailConfiguration:
+        EmailSendingAccount: COGNITO_DEFAULT
+      UserPoolTags: 
+        Name: !Join
+          - '-'
+          - - !Ref CostCenter
+            - !Ref Environment
+            - userss
+        CostCenter: !Ref CostCenter
+        Environment: !Ref Environment
+
+  UserPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      Domain: !Join
+        - '-'
+        - - !Ref CostCenter
+          - !Ref Environment
+          - users
+      UserPoolId: !Ref CognitoUsers
+
+  CognitoResourceServer:
+    Type: AWS::Cognito::UserPoolResourceServer
+    Properties:
+      UserPoolId: !Ref CognitoUsers
+      Identifier: !Sub
+        - 'book-service-${Env}'
+        - Env: !Ref Environment
+      Name: !Sub
+        - 'book-service-${Env}'
+        - Env: !Ref Environment
+      Scopes:
+      - ScopeName: "books" 
+        ScopeDescription: "Can manipulate books"
+      - ScopeName: "categories"
+        ScopeDescription: "Can manipulate categories"
+
+  CognitoClient:
+    Type: AWS::Cognito::UserPoolClient
+    DependsOn:
+      - CognitoResourceServer
+    Properties:
+      UserPoolId: !Ref CognitoUsers
+      ClientName: ClientApp
+      GenerateSecret: false
+      RefreshTokenValidity: 30
+      AllowedOAuthFlows:
+        - code
+        - implicit
+      ExplicitAuthFlows:
+        - ALLOW_USER_SRP_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+      CallbackURLs:
+        - https://example.com
+      AllowedOAuthScopes:
+        - email
+        - openid
+        - !Sub
+          - 'book-service-${Env}/books'
+          - Env: !Ref Environment
+      AllowedOAuthFlowsUserPoolClient: true
+      PreventUserExistenceErrors: ENABLED
+      SupportedIdentityProviders:
+        - COGNITO
+
+  APIGatewayRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Action:
+              - 'sts:AssumeRole'
+            Effect: Allow
+            Principal:
+              Service:
+                - apigateway.amazonaws.com
+      Policies:
+        - PolicyName: !Join
+            - '-'
+            - - !Ref CostCenter
+              - !Ref Application
+              - !Ref Environment
+              - !Ref AWS::Region
+              - apigateway-policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:PutItem
+                  - dynamodb:DeleteItem
+                  - dynamodb:GetItem
+                  - dynamodb:Scan
+                  - dynamodb:Query
+                  - dynamodb:UpdateItem
+                # Including * in the resource Arn allows access to the DynamoDB table and indexes
+                Resource: !Sub
+                  - '${varTableArn}*'
+                  - varTableArn: !GetAtt DynamoDBTable.Arn
+      Tags:
+        - Key: Name
+          Value: !Join
+            - '-'
+            - - !Ref CostCenter
+              - !Ref Application
+              - !Ref Environment
+              - !Ref AWS::Region
+              - apigateway-role
+        - Key: Application
+          Value: !Ref Application
+        - Key: CostCenter
+          Value: !Ref CostCenter
+        - Key: Environment
+          Value: !Ref Environment
+
+  Api:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: !Join
+        - '-'
+        - - !Ref CostCenter
+          - !Ref Application
+          - !Ref Environment
+          - restapi
+      Tags:
+        - Key: Name
+          Value: !Join
+            - '-'
+            - - !Ref CostCenter
+              - !Ref Application
+              - !Ref Environment
+              - restapi
+        - Key: Application
+          Value: !Ref Application
+        - Key: CostCenter
+          Value: !Ref CostCenter
+        - Key: Environment
+          Value: !Ref Environment
+
+  ApiAuthorizer:
+    Type: AWS::ApiGateway::Authorizer
+    Properties:
+      IdentitySource: method.request.header.authorization
+      Name: CognitoAuthorizer
+      ProviderARNs:
+        - Fn::GetAtt:
+            - CognitoUsers
+            - Arn
+      RestApiId: !Ref Api
+      Type: COGNITO_USER_POOLS
+
+  BookResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref Api
+      ParentId: !GetAtt Api.RootResourceId
+      PathPart: 'books'
+
+  BookMethodPost:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref Api
+      ResourceId: !Ref BookResource
+      HttpMethod: POST
+      AuthorizationType: COGNITO_USER_POOLS
+      AuthorizerId: !Ref ApiAuthorizer
+      AuthorizationScopes:
+        - book-service-dev/books
+      Integration:
+        Type: AWS
+        Credentials: !GetAtt APIGatewayRole.Arn
+        # Should always be POST when integrating with AWS services
+        IntegrationHttpMethod: POST
+        # More info: https://docs.aws.amazon.com/apigateway/api-reference/resource/integration/
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:dynamodb:action/PutItem'
+        PassthroughBehavior: WHEN_NO_TEMPLATES
+        RequestTemplates:
+          # Build the structure of the request that is sent when calling DynamoDB PutItem
+          # Using single-line, stringified JSON as the mapping template
+          # Example body when making API request: {"artist": "The Beatles", "album": "Abbey Road"}
+          # Use the unique id of the API context variable (eg: $context.requestId) as the DynamoDB item id
+          application/json: !Sub
+            - |
+              {
+                "TableName": "${DBName}",
+                "Item": {
+                  "Id": {
+                    "S": "$context.requestId"
+                  },
+                  "Title": {
+                    "S": "$input.path('$.title')"
+                  },
+                  "Isbn": {
+                    "S": "$input.path('$.isbn')"
+                  },
+                  "Author": {
+                    "S": "$input.path('$.author')"
+                  },
+                  "CreatedAt": {
+                    "N": "$context.requestTimeEpoch"
+                  },
+                  "UpdatedAt": {
+                    "N": "$context.requestTimeEpoch"
+                  }
+                }
+              }
+            - DBName: !Join
+              - '-'
+              - - !Ref CostCenter
+                - !Ref Application
+                - !Ref Environment
+                - books
+        IntegrationResponses:
+          - StatusCode: '200'
+            ResponseTemplates:
+              application/json: "{}"
+      MethodResponses:
+        - StatusCode: '200'
+
+  ApiDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn:
+      - BookMethodPost
+    Properties:
+      RestApiId: !Ref Api
+      StageName: !Ref Environment
+
+Outputs:
+  ApiRootUrl:
+    Description: Root Url of the API
+    Value: !Sub
+      - 'https://${ApiId}.execute-api.${AWS::Region}.amazonaws.com/${Env}'
+      - ApiId: !Ref Api
+        Env: !Ref Environment
