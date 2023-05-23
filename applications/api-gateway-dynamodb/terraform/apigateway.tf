@@ -17,12 +17,6 @@ resource "aws_api_gateway_authorizer" "cognito" {
 }
 
 resource "aws_api_gateway_deployment" "restapi" {
-  depends_on = [
-    aws_api_gateway_integration.post_book,
-    aws_api_gateway_integration.get_book,
-    aws_api_gateway_integration.get_bookId
-  ]
-
   rest_api_id = aws_api_gateway_rest_api.restapi.id
 
   triggers = {
@@ -35,9 +29,15 @@ resource "aws_api_gateway_deployment" "restapi" {
       aws_api_gateway_method.post_book.id,
       aws_api_gateway_method.get_book.id,
       aws_api_gateway_method.get_bookId.id,
+      aws_api_gateway_method.delete_bookId.id,
       aws_api_gateway_integration.post_book.id,
       aws_api_gateway_integration.get_book.id,
       aws_api_gateway_integration.get_bookId.id,
+      aws_api_gateway_integration.delete_bookId.id,
+      aws_api_gateway_integration_response.books_post_success,
+      aws_api_gateway_integration_response.books_get_success,
+      aws_api_gateway_integration_response.bookId_get_success,
+      aws_api_gateway_integration_response.bookId_delete_success,
     ]))
   }
 

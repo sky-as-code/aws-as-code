@@ -66,12 +66,13 @@ resource "aws_api_gateway_integration_response" "books_post_success" {
   depends_on = [
     aws_api_gateway_integration.post_book,
     aws_api_gateway_method.post_book,
+    aws_api_gateway_method_response.books_post_success,
   ]
 
   rest_api_id = aws_api_gateway_rest_api.restapi.id
   resource_id = aws_api_gateway_resource.books.id
   http_method = aws_api_gateway_method.post_book.http_method
-  status_code = "200"
+  status_code = aws_api_gateway_method_response.books_post_success.status_code
 
   # See more about Velocity Language: https://velocity.apache.org/engine/devel/vtl-reference.html
   # Mapping template variables: https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-mapping-template-reference.html
