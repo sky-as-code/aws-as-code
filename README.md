@@ -120,10 +120,22 @@ Kindly refer to [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 *Note:* Some challenges are indexed multiple times because it involves many AWS services.
 
+### **API Gateway**
+  - [api-gateway-dynamodb](./applications/api-gateway-dynamodb)
+  - [api-gateway-dynamodb-cognito](./applications/api-gateway-dynamodb-cognito)
+
 ### **ASG**
   - [auto-scaling-group-scheduled-policy](./molecules/compute/auto-scaling-group-scheduled-policy)
   - auto-scaling-group-step
   - auto-scaling-group-targettracking
+
+### **Cognito**
+  - [api-gateway-dynamodb](./applications/api-gateway-dynamodb)
+  - [api-gateway-dynamodb-cognito](./applications/api-gateway-dynamodb-cognito)
+
+### **DynamoDB**
+  - [api-gateway-dynamodb](./applications/api-gateway-dynamodb)
+  - [api-gateway-dynamodb-cognito](./applications/api-gateway-dynamodb-cognito)
 
 ### **EC2**
   - [ec2-instance](./atoms/compute/ec2-instance)
