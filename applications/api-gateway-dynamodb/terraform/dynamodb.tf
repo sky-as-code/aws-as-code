@@ -1,5 +1,5 @@
 resource "aws_dynamodb_table" "ddb_books" {
-  name         = "${local.prefix}-books"
+  name         = "${local.prefix}-books-ddb"
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "Id"
 
@@ -9,6 +9,6 @@ resource "aws_dynamodb_table" "ddb_books" {
   }
 
   tags = merge(local.tags, {
-    Name = "${local.prefix}-books"
+    Name = "${local.prefix}-books-ddb"
   })
 }

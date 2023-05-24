@@ -5,7 +5,7 @@ locals {
 }
 
 resource "aws_cognito_user_pool" "all_users" {
-  name = "${local.prefix_short}-allusers"
+  name = "${local.prefix_short}-allusers-pool"
 
   account_recovery_setting {
     recovery_mechanism {
@@ -59,7 +59,7 @@ resource "aws_cognito_user_pool" "all_users" {
   }
 
   tags = {
-    Name            = "${local.prefix_short}-allusers"
+    Name            = "${local.prefix_short}-allusers-pool"
     CostCenter      = local.cost_center
     EnvironmentName = local.env_name
     EnvironmentType = local.configs["env_type"]
@@ -71,7 +71,7 @@ resource "aws_cognito_user_pool_domain" "main" {
   user_pool_id = aws_cognito_user_pool.all_users.id
 }
 
-resource "aws_cognito_resource_server" "book-svc" {
+resource "aws_cognito_resource_server" "book_svc" {
   identifier = local.resrc_server_name
   name       = local.resrc_server_name
 
@@ -88,6 +88,10 @@ resource "aws_cognito_resource_server" "book-svc" {
 }
 
 resource "aws_cognito_user_pool_client" "client" {
+  depends_on = [
+    aws_cognito_resource_server.book_svc,
+  ]
+
   name                                 = "ClientApp"
   allowed_oauth_scopes                 = ["openid", "email", local.scope_books, local.scope_categories]
   allowed_oauth_flows                  = ["code", "implicit"]

@@ -8,7 +8,7 @@ output "api_client_id" {
 }
 
 output "auth_url" {
-  value       = "https://${aws_cognito_user_pool.all_users.domain}.auth.${local.aws_region}.amazoncognito.com/login"
+  value       = "https://${aws_cognito_user_pool_domain.main.domain}.auth.${local.aws_region}.amazoncognito.com/login"
   description = "URL to get access token"
 }
 

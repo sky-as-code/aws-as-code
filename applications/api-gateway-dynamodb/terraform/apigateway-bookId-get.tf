@@ -72,7 +72,7 @@ resource "aws_api_gateway_integration_response" "bookId_get_success" {
 #else
     #set($context.responseOverride.status = 404)
 {
-  "error": "Item not found"
+  "message": "Item not found"
 }
 #end
 EOF
