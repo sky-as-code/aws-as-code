@@ -89,6 +89,10 @@ To run this solution:
 To clean up all resource:
   - `./run-terraform.sh destroy`
 
+### **Postman**
+
+Import API Collection and Environment files from directory `./postman`
+
 ## What we learnt
 
 Cognito provides convenient log-in and sign-up UI.
