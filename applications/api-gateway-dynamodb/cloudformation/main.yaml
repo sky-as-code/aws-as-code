@@ -132,6 +132,13 @@ Resources:
       ParentId: !GetAtt Api.RootResourceId
       PathPart: 'books'
 
+  BookIdResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref Api
+      ParentId: !Ref BookResource
+      PathPart: '{bookId}'
+
   BookMethodPost:
     Type: AWS::ApiGateway::Method
     Properties:
@@ -145,7 +152,7 @@ Resources:
         # Should always be POST when integrating with AWS services
         IntegrationHttpMethod: POST
         # More info: https://docs.aws.amazon.com/apigateway/api-reference/resource/integration/
-        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:dynamodb:action/PutItem'
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:dynamodb:action/UpdateItem'
         PassthroughBehavior: WHEN_NO_TEMPLATES
         RequestTemplates:
           # Build the structure of the request that is sent when calling DynamoDB PutItem
@@ -156,24 +163,130 @@ Resources:
             - |
               {
                 "TableName": "${DBName}",
-                "Item": {
+                "Key": {
                   "Id": {
                     "S": "$context.requestId"
-                  },
-                  "Title": {
+                  }
+                },
+                "UpdateExpression": "SET Title=:title,Isbn=:isbn,Author=:author,CreatedAt=:createdAt,UpdatedAt=:updatedAt",
+                "ExpressionAttributeValues": {
+                  ":title": {
                     "S": "$input.path('$.title')"
                   },
-                  "Isbn": {
+                  ":isbn": {
                     "S": "$input.path('$.isbn')"
                   },
-                  "Author": {
+                  ":author": {
                     "S": "$input.path('$.author')"
                   },
-                  "CreatedAt": {
+                  ":createdAt": {
                     "N": "$context.requestTimeEpoch"
                   },
-                  "UpdatedAt": {
+                  ":updatedAt": {
                     "N": "$context.requestTimeEpoch"
+                  }
+                },
+                "ReturnValues": "ALL_NEW"
+              }
+            - DBName: !Join
+              - '-'
+              - - !Ref CostCenter
+                - !Ref Application
+                - !Ref Environment
+                - books
+        IntegrationResponses:
+          - StatusCode: '200'
+            ResponseTemplates:
+              application/json: |
+                #set($elem = $input.path('$.Attributes'))
+                {
+                  "id": "$elem.Id.S",
+                  "title": "$elem.Title.S",
+                  "isbn": "$elem.Isbn.S",
+                  "author": "$elem.Author.S",
+                  "createdAt": "$elem.CreatedAt.N",
+                  "updatedAt": "$elem.UpdatedAt.N"
+                }
+      MethodResponses:
+        - StatusCode: '200'
+
+  BookMethodGet:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref Api
+      ResourceId: !Ref BookResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS
+        Credentials: !GetAtt APIGatewayRole.Arn
+        # Should always be POST when integrating with AWS services
+        IntegrationHttpMethod: POST
+        # More info: https://docs.aws.amazon.com/apigateway/api-reference/resource/integration/
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:dynamodb:action/Scan'
+        PassthroughBehavior: WHEN_NO_TEMPLATES
+        RequestTemplates:
+          # Build the structure of the request that is sent when calling DynamoDB PutItem
+          # Using single-line, stringified JSON as the mapping template
+          # Example body when making API request: {"artist": "The Beatles", "album": "Abbey Road"}
+          # Use the unique id of the API context variable (eg: $context.requestId) as the DynamoDB item id
+          application/json: !Sub
+            - |
+              {
+                "TableName": "${DBName}"
+              }
+            - DBName: !Join
+              - '-'
+              - - !Ref CostCenter
+                - !Ref Application
+                - !Ref Environment
+                - books
+        IntegrationResponses:
+          - StatusCode: '200'
+            ResponseTemplates:
+              application/json: |
+                #set($inputRoot = $input.path('$'))
+                [
+                  #foreach($elem in $inputRoot.Items) {
+                    "id": "$elem.Id.S",
+                    "title": "$elem.Title.S",
+                    "isbn": "$elem.Isbn.S",
+                    "author": "$elem.Author.S",
+                    "createdAt": "$elem.CreatedAt.N",
+                    "updatedAt": "$elem.UpdatedAt.N"
+                  }#if($foreach.hasNext),#end
+                  #end
+                ]
+      MethodResponses:
+        - StatusCode: '200'
+
+  BookIdMethodGet:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref Api
+      ResourceId: !Ref BookIdResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS
+        Credentials: !GetAtt APIGatewayRole.Arn
+        # Should always be POST when integrating with AWS services
+        IntegrationHttpMethod: POST
+        # More info: https://docs.aws.amazon.com/apigateway/api-reference/resource/integration/
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:dynamodb:action/GetItem'
+        PassthroughBehavior: WHEN_NO_TEMPLATES
+        RequestTemplates:
+          # Build the structure of the request that is sent when calling DynamoDB PutItem
+          # Using single-line, stringified JSON as the mapping template
+          # Example body when making API request: {"artist": "The Beatles", "album": "Abbey Road"}
+          # Use the unique id of the API context variable (eg: $context.requestId) as the DynamoDB item id
+          application/json: !Sub
+            - |
+              {
+                "TableName": "${DBName}",
+                "Key": {
+                  "Id": {
+                    "S": "$input.params('bookId')"
                   }
                 }
               }
@@ -186,7 +299,78 @@ Resources:
         IntegrationResponses:
           - StatusCode: '200'
             ResponseTemplates:
-              application/json: "{}"
+              application/json: |
+                #set($elem = $input.path('$.Item'))
+                #if($elem.Id.S != "")
+                {
+                  "id": "$elem.Id.S",
+                  "title": "$elem.Title.S",
+                  "isbn": "$elem.Isbn.S",
+                  "author": "$elem.Author.S",
+                  "createdAt": "$elem.CreatedAt.N",
+                  "updatedAt": "$elem.UpdatedAt.N"
+                }
+                #else
+                    #set($context.responseOverride.status = 404)
+                {
+                  "message": "Item not found"
+                }
+                #end
+      MethodResponses:
+        - StatusCode: '200'
+
+  BookIdMethodDelete:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref Api
+      ResourceId: !Ref BookIdResource
+      HttpMethod: DELETE
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS
+        Credentials: !GetAtt APIGatewayRole.Arn
+        # Should always be POST when integrating with AWS services
+        IntegrationHttpMethod: POST
+        # More info: https://docs.aws.amazon.com/apigateway/api-reference/resource/integration/
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:dynamodb:action/DeleteItem'
+        PassthroughBehavior: WHEN_NO_TEMPLATES
+        RequestTemplates:
+          # Build the structure of the request that is sent when calling DynamoDB PutItem
+          # Using single-line, stringified JSON as the mapping template
+          # Example body when making API request: {"artist": "The Beatles", "album": "Abbey Road"}
+          # Use the unique id of the API context variable (eg: $context.requestId) as the DynamoDB item id
+          application/json: !Sub
+            - |
+              {
+                "TableName": "${DBName}",
+                "Key": {
+                  "Id": {
+                    "S": "$input.params('bookId')"
+                  }
+                },
+                "ReturnValues": "ALL_OLD"
+              }
+            - DBName: !Join
+              - '-'
+              - - !Ref CostCenter
+                - !Ref Application
+                - !Ref Environment
+                - books
+        IntegrationResponses:
+          - StatusCode: '200'
+            ResponseTemplates:
+              application/json: |
+                #set($elem = $input.path('$.Attributes'))
+                #if($elem.Id.S != "")
+                {
+                  "deletedAt": "$context.requestTimeEpoch"
+                }
+                #else
+                    #set($context.responseOverride.status = 404)
+                {
+                  "message": "Item not found"
+                }
+                #end
       MethodResponses:
         - StatusCode: '200'
 
@@ -194,6 +378,9 @@ Resources:
     Type: AWS::ApiGateway::Deployment
     DependsOn:
       - BookMethodPost
+      - BookMethodGet
+      - BookIdMethodGet
+      - BookIdMethodDelete
     Properties:
       RestApiId: !Ref Api
       StageName: !Ref Environment
