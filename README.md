@@ -107,6 +107,9 @@ Kindly refer to [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## FAQ
 
+**Q:** *What if I have issues when running the solution code?*<br>
+**A:** Please refer to [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) for common issues, or [create a ticket](https://github.com/sky-as-code/aws-as-code/issues) if your problem cannot be found there.
+
 **Q:** *Why does the organization name (Sky-As-Code) have hyphen between words?*<br>
 **A:** Because of the same reason why Batman one word, Iron Man two words and Spider-Man two words with a hyphen in between.
 
@@ -114,7 +117,7 @@ Kindly refer to [CONTRIBUTING.md](./CONTRIBUTING.md).
 **A:** You are welcomed to [create a ticket](https://github.com/sky-as-code/aws-as-code/issues) giving links to the best practices, or [raise a pull request](https://github.com/sky-as-code/aws-as-code/pulls) if you have free time, just make sure to include links to sources where you base your opinion on. And don't forget to read [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 **Q:** *Are the solutions safe to use in my company's production environment?*<br>
-**A:** You are safe to use source code in this repository for your company's commercial purpose under MIT license. However, about security and best practice aspects, although we are trying to make them as safe for real-life use as possible, you had better enrich yourself knowledge to decide how to apply the solutions in this repository to your company's production.
+**A:** You are safe to use source code in this repository for your company's commercial purpose under MIT license. However, about security and best practice aspects, although we are trying to make them as safe for real-life use as possible, you had better enrich your own knowledge to decide how to apply the solutions in this repository to your company's production.
 
 ## Challenge index (by AWS service name)
 

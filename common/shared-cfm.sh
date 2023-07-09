@@ -6,15 +6,17 @@ where action is one of:
    update     Update stack and wait till done
    delete     Delete stack and wait till done
    describe   Describe stack
-   exists     Check if stack exists
-"
+   exists     Check if stack exists"
 }
 
 createStack() {
 	STACK_NAME=$1
 
 	echo "Creating stack ..."
-	aws cloudformation create-stack --stack-name $STACK_NAME ${@:2}
+	aws cloudformation create-stack --stack-name $STACK_NAME \
+		--capabilities CAPABILITY_IAM \
+		--capabilities CAPABILITY_NAMED_IAM \
+		${@:2}
 
 	echo "Waiting for stack to be created ..."
 	aws cloudformation wait stack-create-complete \
@@ -25,7 +27,10 @@ updateStack() {
 	STACK_NAME=$1
 
 	echo "Updating stack ..."
-	aws cloudformation update-stack --stack-name $STACK_NAME ${@:2}
+	aws cloudformation update-stack --stack-name $STACK_NAME \
+		--capabilities CAPABILITY_IAM \
+		--capabilities CAPABILITY_NAMED_IAM \
+		${@:2}
 
 	echo "Waiting for stack update to complete ..."
 	aws cloudformation wait stack-update-complete \

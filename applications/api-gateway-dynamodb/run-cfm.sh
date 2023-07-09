@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 
-STACK_NAME='app-api-gateway-dynamodb'
 
 APPLICATION='booksvc'
 COST_CENTER='fin' # or 'sales', 'sec'
 ENV='dev' # or 'prod'
 
+STACK_NAME="app-api-gateway-dynamodb-$ENV"
 FILE_PATH=$(pwd)/cloudformation/main.yaml
 
 source ../../common/shared-cfm.sh
@@ -13,7 +13,6 @@ source ../../common/shared-cfm.sh
 createMyStack() {
 	createStack $STACK_NAME \
 		--template-body file:///$FILE_PATH \
-		--capabilities CAPABILITY_IAM \
 		--parameters ParameterKey=Application,ParameterValue=$APPLICATION \
 					ParameterKey=CostCenter,ParameterValue=$COST_CENTER \
 					ParameterKey=Environment,ParameterValue=$ENV
@@ -22,7 +21,6 @@ createMyStack() {
 updateMyStack() {
 	updateStack $STACK_NAME \
 		--template-body file:///$FILE_PATH \
-		--capabilities CAPABILITY_IAM \
 		--parameters ParameterKey=Application,ParameterValue=$APPLICATION \
 					ParameterKey=CostCenter,ParameterValue=$COST_CENTER \
 					ParameterKey=Environment,ParameterValue=$ENV

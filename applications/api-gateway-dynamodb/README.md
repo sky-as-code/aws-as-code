@@ -55,22 +55,33 @@ To run this solution:
 To clean up all resource:
   - `./run-cfm.sh delete`
 
+### **AWS CDK**
+
+Before running this solution:
+  - Install NodeJS >= v18
+  - `cd` to this directory
+  - `cd ./cdk`
+  - Install depedencies: `npm install`
+
+To run this solution:
+  - `cd` to this directory (NOT `./cdk`)
+  - `./run-cdk.sh deploy` or `./run-cdk.sh` for help menu
+
+To clean up all resource:
+  - `./run-cdk.sh destroy`
+
 ### **Terraform**
 
 Before running this solution:
   - Install Terraform CLI
   - `cd` to this directory
-  - `cd ./terraform`
-  - `terraform init`
-
-To change deployment environment:
-  - Edit file `run-terraform.sh` and change variable `ENV`.
-  - `cd ./terraform`
-  - `terraform workspace new dev`<br>
-     (replace `dev` with your environment name).
+  - Run this command only once:
+    ```bash
+    ./run-terraform.sh init
+    ```
 
 To run this solution:
-  - `cd` to this directory (NOT "terraform" directory)
+  - `cd` to this directory
   - To preview the changes: `./run-terraform.sh plan`
   - To make real changes: `./run-terraform.sh apply`
     - Type `yes` when prompted to apply changes.
