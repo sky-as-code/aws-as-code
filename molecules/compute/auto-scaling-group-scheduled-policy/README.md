@@ -7,7 +7,7 @@
 
 ## Problem description
 
-Create an Auto Scaling Group with scheduled scaling policy, abided by following [Common context](../../../README.md#common-context):
+Create an Auto Scaling Group with scheduled scaling policy, abided by following [Common context](/README.md#common-context):
   * Single account compliance.
   * Resource tagging compliance.
   * AWS Region compliance.

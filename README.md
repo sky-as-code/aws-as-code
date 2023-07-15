@@ -29,11 +29,9 @@ We are aware of our imperfection, so this repository is supposed to bring about 
     * **Molecules**: Involving 2, up to 3 AWS services, not counting their subordinate resources.
     * **Organisms**: Involving more than 3 AWS services, not counting their subordinate resources.
 
-2. Read the description in README.md file in each challenge folder *carefully*. Note down the resources required to be created and inputs, outputs of the solution. Mandatory or optional inputs may considerably take more effort to implement (looking at you, [ec2-instance](./atoms/compute/ec2-instance)).
+2. Read the description in README.md file in each challenge folder for problem description and instruction to run solution code.
 
-3. You can peek at the script files `*.sh` in challenge folders to see how your solution is invoked.
-
-4. You can reuse the code of solved challenges in later challenges, using [Cloudformation Module](https://aws.amazon.com/blogs/mt/share-reusable-infrastructure-code-aws-cloudformation-modules-and-stacksets/), Cloudformation exported values, or Terraform Module.
+3. You can reuse the code of solved challenges in later challenges, using [Cloudformation Module](https://aws.amazon.com/blogs/mt/share-reusable-infrastructure-code-aws-cloudformation-modules-and-stacksets/), Cloudformation exported values, or Terraform Module.
 
 ## Common context
 
@@ -135,6 +133,13 @@ Kindly refer to [CONTRIBUTING.md](./CONTRIBUTING.md).
 ### **Cognito**
   - [api-gateway-dynamodb](./applications/api-gateway-dynamodb)
   - [api-gateway-dynamodb-cognito](./applications/api-gateway-dynamodb-cognito)
+
+### **CodeCommit**
+  - [codecommit](./atoms/code/codecommit)
+  - [codecommit-usergroup](./molecules/code/codecommit-usergroup)
+
+### **CodeBuild**
+  - [codebuild-from-codecommit](./molecules/code/codebuild-from-codecommit)
 
 ### **DynamoDB**
   - [api-gateway-dynamodb](./applications/api-gateway-dynamodb)

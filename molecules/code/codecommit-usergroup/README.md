@@ -4,7 +4,7 @@
 
 Create a CodeCommit repository and 2 AWS User Group. One group has full access to this repository while the other has readonly access.
 
-The solution must abide by following [Common context](../../../README.md#common-context):
+The solution must abide by following [Common context](/README.md#common-context):
   * Single account compliance.
   * Resource tagging compliance.
     * For CodeCommit repository, only "Name" and "CostCenter" tags are required.

@@ -2,7 +2,7 @@
 
 ## Problem description
 
-Create a single S3 Bucket abided by following [Common context](../../../README.md#common-context):
+Create a single S3 Bucket abided by following [Common context](/README.md#common-context):
   * Single account compliance.
   * Resource tagging compliance.
   * AWS Region compliance.

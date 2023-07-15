@@ -64,4 +64,7 @@ To run a Terraform solution:
 
 To clean up all resource:
   - `./run-terraform.sh destroy`
+  - Delete Terraform workspace and state file to save disk space. Note that you must run init script again next time.
+     - `rm -rf ./terraform/.terraform*`
+     - `rm ./terraform/terraform.tfstate*`
   - Some challenges may require **manual resource deletion**. Don't forget to read the README.md of each challenge for specific instructions to **avoid unexpected cost**.

@@ -2,7 +2,7 @@
 
 ## Problem description
 
-Create a VPC with IPv4 CIDR block, abided by following [Common context](../../../README.md#common-context):
+Create a VPC with IPv4 CIDR block, abided by following [Common context](/README.md#common-context):
   * Single account compliance.
   * Resource tagging compliance.
   * AWS Region compliance.

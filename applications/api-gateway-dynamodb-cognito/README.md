@@ -8,7 +8,7 @@
 ## Problem description
 
 Create REST API by integrating AWS API Gateway directly with DynamoDB, authenticated with AWS Cognito.
-The solution abides by following Common context [Common context](../../../README.md#common-context):
+The solution abides by following Common context [Common context](/README.md#common-context):
   * Single account compliance.
   * Resource tagging compliance.
 

@@ -3,7 +3,7 @@
 ## Problem description
 
 Create REST API by integrating AWS API Gateway directly with DynamoDB.
-The solution must abide by following [Common context](../../../README.md#common-context):
+The solution must abide by following [Common context](/README.md#common-context):
   * Single account compliance.
   * Resource tagging compliance.
 

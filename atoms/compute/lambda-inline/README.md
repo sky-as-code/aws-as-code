@@ -2,7 +2,7 @@
 
 ## Problem description
 
-Create a Lambda function with inline source code. The function must abide by following [Common context](../../../README.md#common-context):
+Create a Lambda function with inline source code. The function must abide by following [Common context](/README.md#common-context):
   * Single account compliance.
   * Resource tagging compliance.
 

@@ -3,7 +3,7 @@
 ## Problem description
 
 Create a CodeCommit repository.
-The solution must abide by following [Common context](../../../README.md#common-context):
+The solution must abide by following [Common context](/README.md#common-context):
   * Single account compliance.
   * Resource tagging compliance.
     * In this special case, only "Name" and "CostCenter" tags are required.
