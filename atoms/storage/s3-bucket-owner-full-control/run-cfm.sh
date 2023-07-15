@@ -35,14 +35,20 @@ updateMyStack() {
 					ParameterKey=BucketName,ParameterValue=$BUCKET_NAME
 }
 
+myUsage() {
+	echo "Usage: $(basename "$0") [action]
+where action is one of:
+   create     Create stack and wait till done
+   update     Update stack and wait till done
+   delete     Delete stack and wait till done
+   describe   Describe stack
+   exists     Check if stack exists"
+}
+
 set -e # Terminate script execution when an error occurs
 case $1 in
 	create)
 		createMyStack
-		# WARNING:
-		# Comment out this line if you don't want storage charge.
-		uploadData ./sample-data/waiste-drum.jpg $BUCKET_FULL_NAME
-		#
 		;;
 	update)
 		updateMyStack
@@ -61,8 +67,11 @@ case $1 in
 	exists)
 		stackExists $STACK_NAME
 		;;
+	uploadData)
+		uploadData ./sample-data/waiste-drum.jpg $BUCKET_FULL_NAME
+		;;
 	*)
-	usage
+	myUsage
 	;;
 esac
 set +e # Back to default

@@ -55,8 +55,8 @@ You are tasked to implement the infrastructure in a single AWS Account for a com
 > #3 department name: **Security**<br>
 > #3 department code: `sec`<br>
 
-> There are 4 deployment environments: `dev`, `sit`, `stg` and `prod`.<br/>
-> These environments belong to 2 environment types: `nonprod` (includes `dev`, `sit`) and `prod` (includes `stg`, `prod`).
+> There are 4 deployment environments: `dev`, `sit`, `uat` and `prod`.<br/>
+> These environments belong to 2 environment types: `nonprod` (includes `dev`, `sit`) and `prod` (includes `uat`, `prod`).
 
 **Organization compliance**
 
@@ -74,8 +74,8 @@ You are tasked to implement the infrastructure using AWS Organization for an ent
 > #3 department name: **Security**<br>
 > #3 department code: `sec`<br>
 
-> Each department has a separate AWS Account, each has 4 deployment environments: `dev`, `sit`, `stg` and `prod`.<br/>
-> These environments belong to 2 environment types: `nonprod` (includes `dev`, `sit`) and `prod` (includes `stg`, `prod`).
+> Each department has a separate AWS Account, each has 4 deployment environments: `dev`, `sit`, `uat` and `prod`.<br/>
+> These environments belong to 2 environment types: `nonprod` (includes `dev`, `sit`) and `prod` (includes `uat`, `prod`).
 
 
 > All department AWS Accounts are under an AWS Organization whose management account belongs to Security department.
@@ -108,7 +108,7 @@ Kindly refer to [CONTRIBUTING.md](./CONTRIBUTING.md).
 ## FAQ
 
 **Q:** *What if I have issues when running the solution code?*<br>
-**A:** Please refer to [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) for common issues, or [create a ticket](https://github.com/sky-as-code/aws-as-code/issues) if your problem cannot be found there.
+**A:** Please refer to [TROUBLESHOOTING.md](./docs/troubleshooting.md) for common issues, or [create a ticket](https://github.com/sky-as-code/aws-as-code/issues) if your problem cannot be found there.
 
 **Q:** *Why does the organization name (Sky-As-Code) have hyphen between words?*<br>
 **A:** Because of the same reason why Batman one word, Iron Man two words and Spider-Man two words with a hyphen in between.
