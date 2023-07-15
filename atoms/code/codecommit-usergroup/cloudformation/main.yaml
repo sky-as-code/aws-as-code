@@ -1,0 +1,73 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Metadata:
+  License: MIT
+Description: "Sky-As-Code organisation, AWS-As-Code repository.
+  Create a repository in CodeCommit."
+Parameters:
+  RepositoryName:
+    Description: Name of the Git repository. It will be prepended by CostCenter.
+    Type: String
+  RepositoryDesc:
+    Description: The repository description.
+    Type: String
+  FullAccessGroupName:
+    Description: User group name that has full access to the CodeCommit repository.
+    Type: String
+  ReadOnlyGroupName:
+    Description: User group name that has readonly access to the CodeCommit repository.
+    Type: String
+
+  # For Resource tagging compliance
+  CostCenter:
+    Description: The department code.
+    Type: String
+
+Resources:
+  Repository:
+    Type: AWS::CodeCommit::Repository
+    Properties:
+      RepositoryName: !Join
+        - '-'
+        - - !Ref CostCenter
+          - !Ref RepositoryName
+      RepositoryDescription: A microservice to manage books
+      Tags:
+        - Key: CostCenter
+          Value: !Ref CostCenter
+        - Key: Name
+          Value: !Join
+            - '-'
+            - - !Ref CostCenter
+              - !Ref RepositoryName
+  GroupFullAccess:
+    Type: AWS::IAM::Group
+    Properties:
+      GroupName: !Join
+        - '-'
+        - - !Ref CostCenter
+          - !Ref FullAccessGroupName
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/AWSCodeCommitFullAccess'
+  GroupReadOnly:
+    Type: AWS::IAM::Group
+    Properties:
+      GroupName: !Join
+        - '-'
+        - - !Ref CostCenter
+          - !Ref ReadOnlyGroupName
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/AWSCodeCommitReadOnly'
+
+Outputs:
+  RepositoryArn:
+    Description: Repository ARN
+    Value: !GetAtt [Repository, Arn]
+  RepositoryName:
+    Description: Repository full name
+    Value: !GetAtt [Repository, Name]
+  FullAccessGroupName:
+    Description: Full name of full-access group
+    Value: !Ref GroupFullAccess
+  ReadOnlyGroupName:
+    Description: Full name of readonly group
+    Value: !Ref GroupReadOnly
